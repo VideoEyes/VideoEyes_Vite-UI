@@ -6,7 +6,7 @@ body {
   justify-content: center;
   overflow: hidden;
   background-image: url('./wavy-lines.svg');
-  background-size: cover;
+  /* background-size: cover; */
   user-select: none;
 }
 
@@ -31,7 +31,8 @@ code {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  margin-bottom: 80px;
+  /* margin-bottom: 80px; */
+  /* height: ; */
 }
 
 .logo {
@@ -52,7 +53,7 @@ code {
   line-height: 16px;
   color: var(--ev-c-text-2);
   font-weight: 600;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
 }
 
 .text {
