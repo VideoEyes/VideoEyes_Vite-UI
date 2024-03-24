@@ -4,7 +4,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { session } from 'electron'
 const { dialog } = require('electron')
-
+const fs = require('fs')
+const path = require('path')
+const { exec } = require('child_process')
 
 function createWindow() {
   // Create the browser window.
@@ -95,9 +97,6 @@ app.whenReady().then(() => {
       return
     }
     // copy file to output folder
-    const fs = require('fs')
-    const path = require('path')
-    const { exec } = require('child_process')
     const input = result.filePaths[0]
     const output = path.join(__dirname, '../../input/')
     if (!fs.existsSync(output)) {
@@ -122,6 +121,33 @@ app.whenReady().then(() => {
   })
 })
 
+function call_pySceneDetect() {
+  const output_csv = path.join(__dirname, '../../csv/code.csv');
+  const output_image = path.join(__dirname, '../../image');
+  
+  const output_csv_dir = path.dirname(output_csv);
+  if (!fs.existsSync(output_csv_dir)) {
+    fs.mkdirSync(output_csv_dir, { recursive: true });
+  }
+  fs.writeFileSync(output_csv, ''); 
+  if (!fs.existsSync(output_image)) {
+    fs.mkdirSync(output_image, { recursive: true });
+  }
+
+  const exePath = path.join(__dirname, '../../resources/main.exe');
+  const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
+  
+  const cmd = `"${exePath}" "${inputVideo}" "${output_csv}" "${output_image}"`;
+  
+  exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`error: ${error}`);
+      return;
+    }
+    console.log(`output: ${stdout}`);
+  });
+}
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -133,4 +159,3 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
-
