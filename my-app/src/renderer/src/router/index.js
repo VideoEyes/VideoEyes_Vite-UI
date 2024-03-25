@@ -1,10 +1,14 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory,createWebHashHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Edit from '../views/Edit.vue'
 
 const routes = [
   {
     path: '/',
+    redirect: '/home'
+  },
+  {
+    path: '/home',
     component: Home
   },
   {
@@ -14,7 +18,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 })
 
