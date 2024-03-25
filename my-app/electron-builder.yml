@@ -12,12 +12,15 @@ asarUnpack:
   - resources/**
 win:
   executableName: my-app
-  target: portable
+  # target: portable
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
