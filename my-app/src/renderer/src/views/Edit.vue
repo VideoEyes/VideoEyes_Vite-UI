@@ -5,11 +5,22 @@ import { useWindowSize } from "@vueuse/core";
 import listen from "../picture/listen.png"
 import store from "../picture/store.png"
 import "../assets/edit.css"
+import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
+import path from 'node:path'
+import router from '../router';
 
 const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
-import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
-import path from 'node:path'
+
+onMounted(() => {
+  
+  const video = document.getElementById('video') as HTMLSourceElement;
+  const video_path  = window.electron.ipcRenderer.sendSync('get-video-path');
+  console.log('video_path', video_path)
+  video.src = video_path;
+})
+
+
 
 // protocol.registerSchemesAsPrivileged([
 //   {
@@ -120,6 +131,7 @@ const toggleWindow = (window) => {
 //     }
 //   }});
 </script>
+
 <template>
   <div class="content">
     <div class="title">甚麼時候可以睡覺</div>
@@ -131,7 +143,10 @@ const toggleWindow = (window) => {
         </div>
       </div>
       <div class="top__middle">
-        <video src="#"></video>
+        <video controls width="640" height="360">
+          <source id="video" src="" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
       </div>
       <div class="top__right">
         <div class="right_title">

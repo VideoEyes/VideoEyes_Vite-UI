@@ -42,33 +42,6 @@ function createWindow() {
 }
 
 
-// function createEditWindow() {
-//   const editWindow = new BrowserWindow({
-//     width: 900,
-//     height: 670,
-//     show: false,
-//     autoHideMenuBar: true,
-//     webPreferences: {
-//       preload: join(__dirname, '../preload/index.js'),
-//       sandbox: false
-//     }
-//   })
-
-//   editWindow.on('ready-to-show', () => {
-//     editWindow.show()
-//   })
-
-//   editWindow.webContents.setWindowOpenHandler((details) => {
-//     shell.openExternal(details.url)
-//     return { action: 'deny' }
-//   })
-
-//   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-//     editWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-//   } else {
-//     editWindow.loadFile(join(__dirname, '../renderer/edit.html'))
-//   }
-// }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -99,11 +72,14 @@ app.whenReady().then(() => {
     }
     // copy file to output folder
     const input = result.filePaths[0]
-    const output = path.join(__dirname, '../../input/')
+    const user_data_path = app.getPath('userData')
+    console.log("user_data_path: ", user_data_path) 
+    const output = path.join(user_data_path, 'video')
     if (!fs.existsSync(output)) {
       fs.mkdirSync(output)
     }
-    const output_file = path.join(output, path.basename(input))
+    //rename video file
+    const output_file = path.join(output, "video.mp4")
     fs.copyFile(input, output_file, (err) => {
       if (err) throw err
       else  {
@@ -111,6 +87,14 @@ app.whenReady().then(() => {
         event.reply('get-video', result.filePaths)
       }
     })
+  })
+
+  //return video file path
+ ipcMain.on('get-video-path', async (event, arg) => {
+    const user_data_path = app.getPath('userData')
+    const output = path.join(user_data_path, 'video')
+    const output_file = path.join(output, "video.mp4")
+    event.returnValue = output_file
   })
   
   createWindow()
