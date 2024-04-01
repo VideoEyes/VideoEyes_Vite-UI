@@ -8,6 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
+const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
 
 function createWindow() {
   // Create the browser window.
@@ -74,8 +75,8 @@ app.whenReady().then(() => {
     // copy file to output folder
     const input = result.filePaths[0]
     //const USER_DATA_PATH = app.getPath('userData')
-    console.log("USER_DATA_PATH: ", USER_DATA_PATH) 
-    const output = path.join(USER_DATA_PATH, 'video')
+    console.log("USER_DATA_PATH: ", PROJECT_PATH) 
+    const output = path.join(PROJECT_PATH, 'video')
     if (!fs.existsSync(output)) {
       fs.mkdirSync(output)
     }
@@ -96,7 +97,7 @@ app.whenReady().then(() => {
   // 路徑會自動抓
   ipcMain.on('get-video-path', async (event, arg) => {
     //const USER_DATA_PATH = app.getPath('userData')
-    const output = path.join(USER_DATA_PATH, 'video')
+    const output = path.join(PROJECT_PATH, 'video')
     const output_file = path.join(output, "video.mp4")
     event.returnValue = output_file
   })
