@@ -89,8 +89,11 @@ app.whenReady().then(() => {
     })
   })
 
-  //return video file path
- ipcMain.on('get-video-path', async (event, arg) => {
+  // return video file path
+  // 影片檔案名稱: video.mp4
+  // 路徑範例: C:\Users\User\AppData\Roaming\my-app
+  // 路徑會自動抓
+  ipcMain.on('get-video-path', async (event, arg) => {
     const user_data_path = app.getPath('userData')
     const output = path.join(user_data_path, 'video')
     const output_file = path.join(output, "video.mp4")

@@ -13,10 +13,8 @@ const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: 
 
 
 onMounted(() => {
-  
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path  = window.electron.ipcRenderer.sendSync('get-video-path');
-  console.log('video_path', video_path)
   video.src = video_path;
 })
 
