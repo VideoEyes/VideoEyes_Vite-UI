@@ -7,6 +7,7 @@ const { dialog } = require('electron')
 const fs = require('fs')
 const path = require('path')
 const { exec } = require('child_process')
+const USER_DATA_PATH = app.getPath('userData')
 
 function createWindow() {
   // Create the browser window.
@@ -72,9 +73,9 @@ app.whenReady().then(() => {
     }
     // copy file to output folder
     const input = result.filePaths[0]
-    const user_data_path = app.getPath('userData')
-    console.log("user_data_path: ", user_data_path) 
-    const output = path.join(user_data_path, 'video')
+    //const USER_DATA_PATH = app.getPath('userData')
+    console.log("USER_DATA_PATH: ", USER_DATA_PATH) 
+    const output = path.join(USER_DATA_PATH, 'video')
     if (!fs.existsSync(output)) {
       fs.mkdirSync(output)
     }
@@ -94,8 +95,8 @@ app.whenReady().then(() => {
   // 路徑範例: C:\Users\User\AppData\Roaming\my-app
   // 路徑會自動抓
   ipcMain.on('get-video-path', async (event, arg) => {
-    const user_data_path = app.getPath('userData')
-    const output = path.join(user_data_path, 'video')
+    //const USER_DATA_PATH = app.getPath('userData')
+    const output = path.join(USER_DATA_PATH, 'video')
     const output_file = path.join(output, "video.mp4")
     event.returnValue = output_file
   })

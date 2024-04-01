@@ -22,6 +22,19 @@ $ npm install
 $ npm run dev
 ```
 
+#### Work Note
+##### 檔案儲存位置
+
+- 一般檔案儲存位置
+  - Windows: `C:\Users\使用者名稱\AppData\Roaming\my-app`
+  - macOS: `/Users/使用者名稱/Library/Application Support/my-app`
+  - Linux: `/home/使用者名稱/.config/my-app`
+
+* video 路徑
+  - Windows: `C:\Users\使用者名稱\AppData\Roaming\my-app\video`
+  - macOS: `/Users/使用者名稱/Library/Application Support/my-app/video`
+  - Linux: `/home/使用者名稱/.config/my-app/video`
+
 ### Build
 
 ```bash
@@ -34,3 +47,4 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
