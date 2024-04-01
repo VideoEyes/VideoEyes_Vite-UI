@@ -25,7 +25,7 @@ $ npm run dev
 #### Work Note
 ##### 檔案儲存位置
 
-- 一般檔案儲存位置
+- 一般檔案儲存位置(常數變數: USER_DATA_PATH)
   - Windows: `C:\Users\使用者名稱\AppData\Roaming\my-app`
   - macOS: `/Users/使用者名稱/Library/Application Support/my-app`
   - Linux: `/home/使用者名稱/.config/my-app`
