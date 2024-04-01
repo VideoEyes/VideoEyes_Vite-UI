@@ -28,24 +28,34 @@ $ npm run dev
 ```
 {
     AD-clip-ID1:{
-        scene-start-time: Datetime
-        scene-end-time: Datetime
-        AD-start-time: Datetime
-        AD-content: string-array
-
+        scene-start-time: Datetime, // 片段開始時間
+        scene-end-time: Datetime,   // 片段結束時間
+        AD-start-time: Datetime,    // 口述影像開始時間
+        AD-content: string-array,   // 口述影像內容
+        AD-content-ID: int(Default: 0),         // 口述影像內容ID
     },
     AD-clip-ID2:{
-        scene-start-time:
-        scene-end-time:
-        AD-start-time:
-        AD-content:
+        scene-start-time: hh:mm:ss.ms,
+        scene-end-time: hh:mm:ss.ms,
+        AD-start-time: hh:mm:ss.ms,
+        AD-content: 
     },
 }
 ```
 
 ##### 檔案儲存位置
 
-- 一般檔案儲存位置(常數變數: PROJECT_PATH)
+- Project_Name: 專案名稱
+  - video
+    - video.mp4
+  - AD-clip.json
+
+- 一般檔案儲存位置(常數變數: USER_DATA_PATH)
+  - Windows: `C:\Users\使用者名稱\AppData\Roaming\my-app`
+  - macOS: `/Users/使用者名稱/Library/Application Support/my-app`
+  - Linux: `/home/使用者名稱/.config/my-app`
+
+- 專案內容儲存位置(常數變數: PROJECT_PATH)
   - Windows: `C:\Users\使用者名稱\AppData\Roaming\my-app\Project_Name`
   - macOS: `/Users/使用者名稱/Library/Application Support/my-app/Project_Name`
   - Linux: `/home/使用者名稱/.config/my-app/Project_Name`
