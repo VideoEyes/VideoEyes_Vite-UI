@@ -27,18 +27,19 @@ $ npm run dev
 * AD-clip(片段)
 ```
 {
-    AD-clip-ID1:{
+    1:{
         scene-start-time: Datetime, // 片段開始時間
         scene-end-time: Datetime,   // 片段結束時間
         AD-start-time: Datetime,    // 口述影像開始時間
         AD-content: string-array,   // 口述影像內容
-        AD-content-ID: int(Default: 0),         // 口述影像內容ID
+        AD-content-ID: int(Default: 0)         // 口述影像內容ID
     },
-    AD-clip-ID2:{
+    2:{
         scene-start-time: hh:mm:ss.ms,
         scene-end-time: hh:mm:ss.ms,
         AD-start-time: hh:mm:ss.ms,
-        AD-content: 
+        AD-content: ["","","",""]
+        AD-content-ID: 0
     },
 }
 ```
@@ -77,4 +78,8 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-
+### pySceneDetect
+- 說明 : 切分鏡頭並輸出json檔(如上格式)
+- exe檔案連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
+- python使用 : python .\main.py [video位址] [json位址] 
+- exe使用 : .\main.exe [video位址] [json位址] 
