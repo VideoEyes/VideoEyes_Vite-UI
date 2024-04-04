@@ -80,6 +80,6 @@ $ npm run build:linux
 ```
 ### pySceneDetect
 - 說明 : 切分鏡頭並輸出json檔(如上格式)
-- exe檔案連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
+- exe檔案與範例json連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
 - python使用 : python .\main.py [video位址] [json位址] 
 - exe使用 : .\main.exe [video位址] [json位址] 
