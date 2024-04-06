@@ -91,11 +91,13 @@ const toggleWindow = (window) => {
   }
   window.color = '#282828';
 };
-let ttvalue = ref(0);
-let totaltime = ref(5);
+let ttvalue = ref(1);
+let totaltime = ref(305);
 
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
+let hoverInfoFlex = ref(1);
+
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
   mousePosition.value = {
@@ -103,7 +105,14 @@ function handleMouseMove(event) {
     y: ((event.clientY - rect.top) / rect.height) * 100,
   };
   // 1分鐘
-  now_video_time.value = (ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100;
+  now_video_time.value = Math.round(((ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100) * 100) / 100;
+  if (ttvalue.value == Math.ceil(totaltime.value / 60)) { // 6 5.... => 6
+    if (totaltime.value != ttvalue.value * 60) {
+      const last = totaltime.value - (ttvalue.value - 1) * 60;
+      // 更改flex 排版
+      hoverInfoFlex.value = last / 60;
+    }
+  }
 }
 
 </script>
@@ -168,16 +177,18 @@ function handleMouseMove(event) {
     </div>
     <div class="down">
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
-
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
-        <div class="hover-info" :style="{ left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
+        <div class="hover-info"
+          :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
           X: {{ mousePosition.x.toFixed(2) }}%
-          
         </div>
         {{ now_video_time }}
+        <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
       </div>
-      <button class="right_arrow" @click="ttvalue = (ttvalue < totaltime) ? ttvalue + 1 : totaltime">123456</button>
 
+      <button class="right_arrow"
+        @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">123456</button>
+      <!-- 不足60 取整數 -->
     </div>
   </div>
 </template>
