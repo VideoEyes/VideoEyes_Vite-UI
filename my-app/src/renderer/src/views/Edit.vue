@@ -9,12 +9,12 @@ import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
 import router from '../router';
 
-const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
+// const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
 
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
-  const video_path  = window.electron.ipcRenderer.sendSync('get-video-path');
+  const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
 })
 
@@ -90,44 +90,22 @@ const toggleWindow = (window) => {
     windows.value[i].color = 'rgb(255,255,255)'
   }
   window.color = '#282828';
-
 };
+let ttvalue = ref(0);
+let totaltime = ref(5);
 
+let mousePosition = ref({ x: 0, y: 0 });
+let now_video_time = ref(0);
+function handleMouseMove(event) {
+  let rect = event.target.getBoundingClientRect();
+  mousePosition.value = {
+    x: ((event.clientX - rect.left) / rect.width) * 100,
+    y: ((event.clientY - rect.top) / rect.height) * 100,
+  };
+  // 1分鐘
+  now_video_time.value = (ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100;
+}
 
-
-
-
-// const a = window.addEventListener('resize', function () {
-//   var width = window.innerWidth;
-
-//   if (width <= 600) {
-//     const topLeftElement = document.querySelector('.top__left');
-//     if (topLeftElement) {
-//       topLeftElement.style.minWidth = '300px';
-//     }
-//     const topMiddleElement = document.querySelector('.top__middle');
-//     if (topMiddleElement) {
-//       topMiddleElement.style.minWidth = '300px';
-//     }
-//     const topRightElement = document.querySelector('.top__right');
-//     if (topRightElement) {
-//       topRightElement.style.minWidth = '200px';
-//     }
-
-//   } else {
-//     const topLeftElement = document.querySelector('.top__left');
-//     if (topLeftElement) {
-//       topLeftElement.style.minWidth = '0px';
-//     }
-//     const topMiddleElement = document.querySelector('.top__middle');
-//     if (topMiddleElement) {
-//       topMiddleElement.style.minWidth = '0px';
-//     }
-//     const topRightElement = document.querySelector('.top__right');
-//     if (topRightElement) {
-//       topRightElement.style.minWidth = '200px';
-//     }
-//   }});
 </script>
 
 <template>
@@ -189,13 +167,18 @@ const toggleWindow = (window) => {
       </div>
     </div>
     <div class="down">
-      <div class="media-scroller snaps-inline">
-        <div class="scrollmenu">
-          <img v-for="(item, i) in inconlist" :key="i" :src="item">
-        </div>
-      </div>
+      <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
 
+      <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
+        <div class="hover-info" :style="{ left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
+          X: {{ mousePosition.x.toFixed(2) }}%
+          
+        </div>
+        {{ now_video_time }}
+      </div>
+      <button class="right_arrow" @click="ttvalue = (ttvalue < totaltime) ? ttvalue + 1 : totaltime">123456</button>
 
     </div>
   </div>
 </template>
+<!-- <img v-for="(item, i) in inconlist" :key="i" :src="item"> -->
