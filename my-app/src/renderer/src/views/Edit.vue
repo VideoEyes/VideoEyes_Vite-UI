@@ -123,7 +123,13 @@ function handleMouseMove(event) {
     <hr>
     <div class="top">
       <div class="top__left">
-        <div class="left_title">影片素材</div>
+        <div class="left_title">
+          <div class="edit-button">
+            <el-button type="primary">新增</el-button>
+            <el-button type="danger">刪除</el-button>
+
+          </div>
+        </div>
         <div class="left_container">
         </div>
       </div>
