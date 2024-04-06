@@ -60,6 +60,7 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
   //copy video file
   ipcMain.on('file', async (event, arg) => {
     const result = await dialog.showOpenDialog({
@@ -75,9 +76,13 @@ app.whenReady().then(() => {
     // copy file to output folder
     const input = result.filePaths[0]
     //const USER_DATA_PATH = app.getPath('userData')
-    console.log("USER_DATA_PATH: ", PROJECT_PATH) 
+    if (!fs.existsSync(PROJECT_PATH)) {
+      console.log('project folder not exist, create one')
+      fs.mkdirSync(PROJECT_PATH)
+    }
     const output = path.join(PROJECT_PATH, 'video')
     if (!fs.existsSync(output)) {
+      console.log('output folder not exist, create one')
       fs.mkdirSync(output)
     }
     //rename video file
