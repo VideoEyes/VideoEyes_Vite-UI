@@ -83,3 +83,13 @@ $ npm run build:linux
 - exe檔案與範例json連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
 - python使用 : python .\main.py [video位址] [json位址] 
 - exe使用 : .\main.exe [video位址] [json位址] 
+
+### Gemini
+> 影片僅Vertex AI 支援，需使用Google Cloud Platform (之前比較簡單的是Google AI)，影片需上傳至Google Cloud Storage
+
+1. 安裝 [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+2. 建立GCP Project 和啟動 Vertex AI API
+3. [建立Service Account並下載金鑰](https://cloud.google.com/vertex-ai/docs/start/client-libraries#node.js)
+4. 在執行前須先登入 [`gcloud auth application-default login`](https://cloud.google.com/docs/authentication/provide-credentials-adc?hl=zh-cn#local-dev)
+5. 安裝 `npm install @google-cloud/vertex-ai`
+6. 執行 `node .\gemini.js`
