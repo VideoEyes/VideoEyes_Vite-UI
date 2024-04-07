@@ -11,14 +11,11 @@ import router from '../router';
 
 // const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
-
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
 })
-
-
 
 // protocol.registerSchemesAsPrivileged([
 //   {

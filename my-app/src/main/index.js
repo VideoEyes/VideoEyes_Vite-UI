@@ -106,6 +106,12 @@ app.whenReady().then(() => {
     const output_file = path.join(output, "video.mp4")
     event.returnValue = output_file
   })
+
+  //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
+  ipcMain.on('start_PySceneDetect', async (event, arg) => {
+    call_pySceneDetect(event)
+    console.log('start PySceneDetect now')
+  })
   
   createWindow()
 
@@ -116,30 +122,41 @@ app.whenReady().then(() => {
   })
 })
 
-function call_pySceneDetect() {
-  const output_csv = path.join(__dirname, '../../csv/code.csv');
-  const output_image = path.join(__dirname, '../../image');
+function call_pySceneDetect(event) {
+  const output_json = path.join(USER_DATA_PATH, 'json/main.json');
+  // const output_image = path.join(USER_DATA_PATH, 'image');
   
-  const output_csv_dir = path.dirname(output_csv);
-  if (!fs.existsSync(output_csv_dir)) {
-    fs.mkdirSync(output_csv_dir, { recursive: true });
+  const output_json_dir = path.dirname(output_json);
+  if (!fs.existsSync(output_json_dir)) {
+    fs.mkdirSync(output_json_dir, { recursive: true });
   }
-  fs.writeFileSync(output_csv, ''); 
-  if (!fs.existsSync(output_image)) {
-    fs.mkdirSync(output_image, { recursive: true });
-  }
+  fs.writeFileSync(output_json, ''); 
+  // if (!fs.existsSync(output_image)) {
+  //   fs.mkdirSync(output_image, { recursive: true });
+  // }
 
   const exePath = path.join(__dirname, '../../resources/main.exe');
-  const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
+
+  const inputVideo = path.join(USER_DATA_PATH, 'video/video.mp4');
   
-  const cmd = `"${exePath}" "${inputVideo}" "${output_csv}" "${output_image}"`;
+  // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
   
+  const cmd = `"${exePath}" "${inputVideo}" "${output_json}"`;
+  console.log(USER_DATA_PATH);
+  console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error}`);
       return;
     }
-    console.log(`output: ${stdout}`);
+    // console.log(stdout);
+    if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
+      console.log('exe Done');
+      event.reply('start_PySceneDetect', "Success")
+    }else{
+      console.log('exe error');
+      event.reply('start_PySceneDetect', "Fail")
+    }
   });
 }
 
