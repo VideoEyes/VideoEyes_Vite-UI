@@ -83,3 +83,9 @@ $ npm run build:linux
 - exe檔案與範例json連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
 - python使用 : python .\main.py [video位址] [json位址] 
 - exe使用 : .\main.exe [video位址] [json位址] 
+
+### 切分影片
+- 說明 : 切分影片
+- exe檔案 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
+- python使用 : python .\video_cut.py [輸入video位址] [輸出video位址] [起始時間] [結束時間]
+- exe使用 : .\video_cut.exe [輸入video位址] [輸出video位址] [起始時間] [結束時間]
