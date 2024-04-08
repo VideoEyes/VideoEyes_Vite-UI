@@ -92,3 +92,13 @@ $ npm run build:linux
 - exe請放resources內
 - python使用 : python .\video_cut.py [輸入video位址] [輸出video位址] [起始時間] [結束時間]
 - exe使用 : .\video_cut.exe [輸入video位址] [輸出video位址] [起始時間] [結束時間]
+
+### Gemini
+> 影片僅Vertex AI 支援，需使用Google Cloud Platform (之前比較簡單的是Google AI)，影片需上傳至Google Cloud Storage
+
+1. 安裝 [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+2. 建立GCP Project 和啟動 Vertex AI API
+3. [建立Service Account並下載金鑰](https://cloud.google.com/vertex-ai/docs/start/client-libraries#node.js)
+4. 在執行前須先登入 [`gcloud auth application-default login`](https://cloud.google.com/docs/authentication/provide-credentials-adc?hl=zh-cn#local-dev)
+5. 安裝 `npm install @google-cloud/vertex-ai`
+6. 執行 `node .\gemini.js`

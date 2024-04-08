@@ -11,14 +11,11 @@ import router from '../router';
 
 // const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
-
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
 })
-
-
 
 // protocol.registerSchemesAsPrivileged([
 //   {
@@ -115,12 +112,12 @@ function handleMouseMove(event) {
   }
   
 }
-
 </script>
 
 <template>
   <div class="content">
-    <div class="title">甚麼時候可以睡覺</div>
+    <div class="title">Project Name</div>
+
     <hr>
     <div class="top">
       <div class="top__left">
