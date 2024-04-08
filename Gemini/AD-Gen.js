@@ -14,6 +14,7 @@ async function sendMultiModalPromptWithVideo(
 
     const generativeVisionModel = vertexAI.getGenerativeModel({
         model: model,
+        
     });
 
     // Pass multimodal prompt
@@ -29,11 +30,21 @@ async function sendMultiModalPromptWithVideo(
                         },
                     },
                     {
-                        text: '你是一個口述影像生成器，請依照此影片片段產生描述',
+                        text: '你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可',
                     },
                 ],
             },
         ],
+        generationConfig: {
+            temperature: 0.1,
+            // topP: number,
+            // topK: number,
+            // candidateCount: integer,
+            // maxOutputTokens: integer,
+            // stopSequences: [
+            //   string
+            // ]
+          }
     };
 
     // Create the response
