@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import mainEXE from '../../resources/main.exe?asset'
+import video_cutEXE from '../../resources/video_cut.exe?asset'
 import { session } from 'electron'
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -123,7 +125,8 @@ app.whenReady().then(() => {
 })
 
 function call_pySceneDetect(event) {
-  const output_json = path.join(USER_DATA_PATH, 'json/main.json');
+  console.log(mainEXE)
+  const output_json = path.join(PROJECT_PATH, 'json/main.json');
   // const output_image = path.join(USER_DATA_PATH, 'image');
   
   const output_json_dir = path.dirname(output_json);
@@ -135,13 +138,13 @@ function call_pySceneDetect(event) {
   //   fs.mkdirSync(output_image, { recursive: true });
   // }
 
-  const exePath = path.join(__dirname, '../../resources/main.exe');
+  const psdEXEPath = mainEXE;
 
-  const inputVideo = path.join(USER_DATA_PATH, 'video/video.mp4');
+  const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4');
   
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
   
-  const cmd = `"${exePath}" "${inputVideo}" "${output_json}"`;
+  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
   console.log(USER_DATA_PATH);
   console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {

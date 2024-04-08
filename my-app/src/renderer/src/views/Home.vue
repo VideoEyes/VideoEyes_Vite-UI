@@ -32,6 +32,11 @@ const handleFileChange = (e: MouseEvent) => {
   window.electron.ipcRenderer.send('file');
 };
 
+const handleFileChangeBack = () => {
+  // 關閉覆蓋層
+  overlayVisible.value = false;
+};
+
 window.electron.ipcRenderer.on('get-video', (event, arg) => {
   console.log("file-name:", arg);
   if (arg.length > 0) {
@@ -51,6 +56,8 @@ window.electron.ipcRenderer.once('start_PySceneDetect', (event, arg) => {
   } else {
     // 顯示錯誤訊息
     console.log('失敗');
+    handleFileChangeBack();
+    overlayVisible.value = false;
   }
 });
 </script>
