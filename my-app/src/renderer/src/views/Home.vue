@@ -32,16 +32,15 @@ const handleFileChange = (e: MouseEvent) => {
   window.electron.ipcRenderer.send('file');
 };
 
-const handleFileChangeBack = () => {
-  // 關閉覆蓋層
-  overlayVisible.value = false;
-};
-
 window.electron.ipcRenderer.on('get-video', (event, arg) => {
   console.log("file-name:", arg);
   if (arg.length > 0) {
     window.electron.ipcRenderer.send('start_PySceneDetect');
   }
+});
+
+window.electron.ipcRenderer.on('meow', (event, arg) => {
+  console.log("wewew:", arg);
 });
 
 window.electron.ipcRenderer.once('start_PySceneDetect', (event, arg) => {

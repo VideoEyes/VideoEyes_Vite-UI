@@ -2,8 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import mainEXE from '../../resources/main.exe?asset'
-import video_cutEXE from '../../resources/video_cut.exe?asset'
+import mainEXE from '../../resources/main.exe?asset&asarUnpack'
+import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -172,13 +172,7 @@ app.whenReady().then(() => {
   })
 })
 
-function call_pySceneDetect() {
-  const output_csv = path.join(__dirname, '../../csv/code.csv');
-  const output_image = path.join(__dirname, '../../image');
 
-  const output_csv_dir = path.dirname(output_csv);
-  if (!fs.existsSync(output_csv_dir)) {
-    fs.mkdirSync(output_csv_dir, { recursive: true });
 function call_pySceneDetect(event) {
   console.log(mainEXE)
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
@@ -200,6 +194,7 @@ function call_pySceneDetect(event) {
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
   
   const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
+  event.reply('meow', cmd);
   console.log(USER_DATA_PATH);
   console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
@@ -210,7 +205,7 @@ function call_pySceneDetect(event) {
     // console.log(stdout);
     if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
       console.log('exe Done');
-      event.reply('start_PySceneDetect', "Success")
+      event.reply('start_PySceneDetect', "Success") 
     }else{
       console.log('exe error');
       event.reply('start_PySceneDetect', "Fail")
