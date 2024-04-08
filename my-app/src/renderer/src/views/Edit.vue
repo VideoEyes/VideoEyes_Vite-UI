@@ -8,57 +8,24 @@ import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
 import router from '../router';
-
-// const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
-
-
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
 })
 
+const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
+//=======================
+function new_AD() {
+  const text = document.getElementById('new_AD') as HTMLSourceElement;
+  // 寫檔到aa.txt
+  window.electron.ipcRenderer.send('write-file', './aa.txt', '511561512');
+  console.log('write-file');
+  AD_cursor.style.cursor = 'crosshair';
+}
 
+//=======================
 
-// protocol.registerSchemesAsPrivileged([
-//   {
-//     scheme: 'animation',
-//     privileges: {
-//       bypassCSP: true,
-//       stream: true,
-//     }
-//   }
-// ])
-// function createWindow() {
-//   // Create the browser window.
-//   const mainWindow = new BrowserWindow({
-//     width: 800,
-//     height: 600,
-//     webPreferences: {
-//       nodeIntegration: false,
-//       // preload: path.join(__dirname, 'preload.js')
-//     }
-//   })
-
-//   // and load the index.html of the app.
-//   mainWindow.loadFile('index.html')
-
-//   app.whenReady().then(() => {
-//     protocol.handle('animation', function (request) {
-//       console.log('request.url', request.url)
-//       return net.fetch('file://' + request.url.slice('animation://'.length))
-//     })
-
-//     createWindow()
-
-//     app.on('activate', function () {
-
-//       if (BrowserWindow.getAllWindows().length === 0) createWindow()
-//     })
-//   })
-// }
-// import "https://unpkg.com/open-props";
-// import "https://unpkg.com/open-props/normalize.min.css";
 const state = reactive({
   tools: [
     { id: 'listen', link: '#', image: listen, text: 'listen' },
@@ -97,7 +64,7 @@ let totaltime = ref(305);
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
-let QQQ = ref(0);
+
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
   mousePosition.value = {
@@ -107,14 +74,15 @@ function handleMouseMove(event) {
   // 1分鐘
   now_video_time.value = Math.round(((ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100) * 100) / 100;
 
-  if((ttvalue.value == Math.ceil(totaltime.value / 60)) && totaltime.value != ttvalue.value * 60){
+  if ((ttvalue.value == Math.ceil(totaltime.value / 60)) && totaltime.value != ttvalue.value * 60) {
     const last = totaltime.value - (ttvalue.value - 1) * 60;
     hoverInfoFlex.value = last / 60;
-  }else{
+  } else {
     hoverInfoFlex.value = 1;
   }
-  
+
 }
+
 
 </script>
 
@@ -126,7 +94,7 @@ function handleMouseMove(event) {
       <div class="top__left">
         <div class="left_title">
           <div class="edit-button">
-            <el-button type="primary">新增</el-button>
+            <el-button type="primary" id="new_AD" @click="new_AD">新增</el-button>
             <el-button type="danger">刪除</el-button>
 
           </div>
@@ -182,7 +150,8 @@ function handleMouseMove(event) {
         </div>
       </div>
     </div>
-    <div class="down">
+    <div class="down" id="ALL">
+
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"

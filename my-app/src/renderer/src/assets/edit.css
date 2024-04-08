@@ -328,8 +328,12 @@ hr {
     background: #795656;
     display: flex;
     justify-content: center;
+    
 }
 .TT_last{
     background: #2e2727;
 
+}
+.down{
+    cursor: url('../assets/AD_tips.ico'), auto;
 }
