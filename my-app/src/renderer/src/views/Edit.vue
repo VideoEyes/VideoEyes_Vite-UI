@@ -111,12 +111,12 @@ function handleMouseMove(event) {
     }
   }
 }
-
 </script>
 
 <template>
   <div class="content">
-    <div class="title">甚麼時候可以睡覺</div>
+    <div class="title">Project Name</div>
+
     <hr>
     <div class="top">
       <div class="top__left">

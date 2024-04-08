@@ -11,6 +11,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+const { VertexAI } = require('@google-cloud/vertexai');
 
 function createWindow() {
   // Create the browser window.
@@ -45,7 +46,54 @@ function createWindow() {
   }
 }
 
+async function call_vertexAI(projectId = 'duet-ai-rain-py',
+  location = 'asia-east1',
+  model = 'gemini-1.0-pro-vision',
+  video = PROJECT_PATH + '/video/video.mp4',
+  mimeType = 'video/mp4'
+){
 
+  // Initialize Vertex with your Cloud project and location
+  const vertexAI = new VertexAI({project: projectId, location: location});
+
+  // Instantiate the model
+  const generativeVisionModel = vertexAI.getGenerativeModel({
+    model: model,
+  });
+
+  // For images, the SDK supports both Google Cloud Storage URI and base64 strings
+  const filePart = {
+    fileData: {
+      fileUri: image,
+      mimeType: mimeType,
+    },
+  };
+
+  const textPart = {
+    text: 'You are an audio description generator. Generate a description for this video.',
+  };
+
+  const request = {
+    contents: [{role: 'user', parts: [filePart, textPart]}],
+  };
+
+  console.log('Prompt Text:');
+  console.log(request.contents[0].parts[1].text);
+
+  console.log('Non-Streaming Response Text:');
+  // Create the response stream
+  const responseStream =
+    await generativeVisionModel.generateContentStream(request);
+
+  // Wait for the response stream to complete
+  const aggregatedResponse = await responseStream.response;
+
+  // Select the text from the response
+  const fullTextResponse =
+    aggregatedResponse.candidates[0].content.parts[0].text;
+
+  console.log(fullTextResponse);
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -68,10 +116,10 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [
-        { name: 'Videos', extensions: ['mp4', 'avi', 'mov']}
+        { name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }
       ]
     })
-    
+
     if (result.filePaths.length === 0) {
       return
     }
@@ -91,7 +139,7 @@ app.whenReady().then(() => {
     const output_file = path.join(output, "video.mp4")
     fs.copyFile(input, output_file, (err) => {
       if (err) throw err
-      else  {
+      else {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       }
@@ -114,7 +162,7 @@ app.whenReady().then(() => {
     call_pySceneDetect(event)
     console.log('start PySceneDetect now')
   })
-  
+
   createWindow()
 
   app.on('activate', function () {
@@ -124,6 +172,13 @@ app.whenReady().then(() => {
   })
 })
 
+function call_pySceneDetect() {
+  const output_csv = path.join(__dirname, '../../csv/code.csv');
+  const output_image = path.join(__dirname, '../../image');
+
+  const output_csv_dir = path.dirname(output_csv);
+  if (!fs.existsSync(output_csv_dir)) {
+    fs.mkdirSync(output_csv_dir, { recursive: true });
 function call_pySceneDetect(event) {
   console.log(mainEXE)
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
