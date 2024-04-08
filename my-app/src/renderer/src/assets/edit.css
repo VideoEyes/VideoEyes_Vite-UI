@@ -327,10 +327,9 @@ hr {
     width: 100%;
     background: #795656;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
 }
 .TT_last{
     background: #2e2727;
-    
 
 }

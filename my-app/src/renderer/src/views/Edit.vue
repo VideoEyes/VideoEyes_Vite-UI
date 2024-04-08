@@ -97,7 +97,7 @@ let totaltime = ref(305);
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
-
+let QQQ = ref(0);
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
   mousePosition.value = {
@@ -106,13 +106,14 @@ function handleMouseMove(event) {
   };
   // 1分鐘
   now_video_time.value = Math.round(((ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100) * 100) / 100;
-  if (ttvalue.value == Math.ceil(totaltime.value / 60)) { // 6 5.... => 6
-    if (totaltime.value != ttvalue.value * 60) {
-      const last = totaltime.value - (ttvalue.value - 1) * 60;
-      // 更改flex 排版
-      hoverInfoFlex.value = last / 60;
-    }
+
+  if((ttvalue.value == Math.ceil(totaltime.value / 60)) && totaltime.value != ttvalue.value * 60){
+    const last = totaltime.value - (ttvalue.value - 1) * 60;
+    hoverInfoFlex.value = last / 60;
+  }else{
+    hoverInfoFlex.value = 1;
   }
+  
 }
 
 </script>
