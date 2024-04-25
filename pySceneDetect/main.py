@@ -44,7 +44,6 @@ def save_scenes_to_json(scene_list, output_file):
         outer_dict[i] = inner_dict
     with open(output_file, "w") as json_file:
         json.dump(outer_dict, json_file, indent=4)
-    print(outer_dict)
 
 input_video_path = arguments[0] #"D:\\meowVue\\pySceneDetect\\vid\orig\\net.mp4"
 output_json_path = arguments[1]
