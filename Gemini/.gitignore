@@ -2,6 +2,6 @@ node_modules
 dist
 out
 .DS_Store
-*.log*
+.log
 input
-.mp4
+.exe

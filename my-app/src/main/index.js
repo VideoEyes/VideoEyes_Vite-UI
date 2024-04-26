@@ -11,6 +11,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
 
 function createWindow() {
@@ -51,10 +52,10 @@ async function call_vertexAI(projectId = 'duet-ai-rain-py',
   model = 'gemini-1.0-pro-vision',
   video = PROJECT_PATH + '/video/video.mp4',
   mimeType = 'video/mp4'
-){
+) {
 
   // Initialize Vertex with your Cloud project and location
-  const vertexAI = new VertexAI({project: projectId, location: location});
+  const vertexAI = new VertexAI({ project: projectId, location: location });
 
   // Instantiate the model
   const generativeVisionModel = vertexAI.getGenerativeModel({
@@ -74,7 +75,7 @@ async function call_vertexAI(projectId = 'duet-ai-rain-py',
   };
 
   const request = {
-    contents: [{role: 'user', parts: [filePart, textPart]}],
+    contents: [{ role: 'user', parts: [filePart, textPart] }],
   };
 
   console.log('Prompt Text:');
@@ -116,10 +117,10 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [
-        { name: 'Videos', extensions: ['mp4', 'avi', 'mov']}
+        { name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }
       ]
     })
-    
+
     if (result.filePaths.length === 0) {
       return
     }
@@ -139,7 +140,7 @@ app.whenReady().then(() => {
     const output_file = path.join(output, "video.mp4")
     fs.copyFile(input, output_file, (err) => {
       if (err) throw err
-      else  {
+      else {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       }
@@ -182,6 +183,29 @@ app.whenReady().then(() => {
     });
   });
 
+
+  ipcMain.on('write-file', (event, filePath, content) => {
+    const absolutePath = path.join(__dirname, filePath);
+    fs.writeFile(absolutePath, content, 'utf8', (err) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      console.log('SUCCESS');
+    });
+  });
+
+  ipcMain.on('read-file', (event, filePath) => {
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      // console.log('SUCCESS:', jsonData);
+      event.reply('read-file-reply', { success: true, data: jsonData });
+    });
+  });
 })
 
 
@@ -189,12 +213,12 @@ function call_pySceneDetect(event) {
   console.log(mainEXE)
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
   // const output_image = path.join(USER_DATA_PATH, 'image');
-  
+
   const output_json_dir = path.dirname(output_json);
   if (!fs.existsSync(output_json_dir)) {
     fs.mkdirSync(output_json_dir, { recursive: true });
   }
-  fs.writeFileSync(output_json, ''); 
+  fs.writeFileSync(output_json, '');
   // if (!fs.existsSync(output_image)) {
   //   fs.mkdirSync(output_image, { recursive: true });
   // }
@@ -202,12 +226,12 @@ function call_pySceneDetect(event) {
   const psdEXEPath = mainEXE;
 
   const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4');
-  
+
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
-  
+
   const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
   event.reply('meow', cmd);
-  console.log(USER_DATA_PATH);
+  console.log("123", USER_DATA_PATH);
   console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
@@ -217,8 +241,8 @@ function call_pySceneDetect(event) {
     // console.log(stdout);
     if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
       console.log('exe Done');
-      event.reply('start_PySceneDetect', "Success") 
-    }else{
+      event.reply('start_PySceneDetect', "Success")
+    } else {
       console.log('exe error');
       event.reply('start_PySceneDetect', "Fail")
     }

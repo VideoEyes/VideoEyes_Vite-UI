@@ -1,9 +1,10 @@
 <script setup lang="ts">
 
-import { toRefs, reactive, ref, onMounted } from 'vue'
+import { toRefs, reactive, ref, onMounted, watchEffect } from 'vue'
 import { useWindowSize } from "@vueuse/core";
 import listen from "../picture/listen.png"
 import store from "../picture/store.png"
+import hint from "../picture/ask.png"
 import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
@@ -12,10 +13,38 @@ import router from '../router';
 // const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
 
+//---
+
+//---
+
+let sceneStart: any = ref({});
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
+  let videoElement = document.querySelector('video') as HTMLVideoElement;
+  videoElement.onloadedmetadata = () => {
+    totaltime.value = videoElement.duration;
+  };
+  // 讀檔
+  window.electron.ipcRenderer.send('read-file', 'NONE');
+  window.electron.ipcRenderer.on('read-file-reply', (event, arg) => {
+    show_time_bar.value = [];
+    if (arg.success) {
+      for (let key in arg.data) {
+        sceneStart[key] = arg.data[key]["scene-start-time"];
+      }
+      // console.log("scene", sceneStart);
+      for (const [key, value] of Object.entries(sceneStart)) {
+        // console.log("123", key, value)
+        calculatePosition(value, ttvalue.value)
+      }
+    } else {
+      console.error('Error reading file:', arg.error);
+    }
+  });
+
+
 })
 
 const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
@@ -24,7 +53,7 @@ function new_AD() {
   const text = document.getElementById('new_AD') as HTMLSourceElement;
   // 寫檔到aa.txt
   window.electron.ipcRenderer.send('write-file', './aa.txt', '511561512');
-  console.log('write-file');
+  // console.log('write-file');
   AD_cursor.style.cursor = 'crosshair';
 }
 
@@ -63,8 +92,7 @@ const toggleWindow = (window) => {
   window.color = '#282828';
 };
 let ttvalue = ref(1);
-let totaltime = ref(305);
-
+let totaltime = ref(0);
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
@@ -85,6 +113,30 @@ function handleMouseMove(event) {
     hoverInfoFlex.value = 1;
   }
 
+}
+function roundTo(num, decimal) {
+  return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal);
+}
+let show_time_bar: any = ref([]);
+
+function calculatePosition(time, ttvalue) {
+  let caltime_sec = String(time).substring(6, 8);
+  let caltime_min = String(time).substring(3, 5);
+  let INT_MIN = parseInt(caltime_min, 10);
+  // console.log("INT_MIN", INT_MIN);
+  if (ttvalue - 1 == INT_MIN) {
+    let Time = parseInt(caltime_sec, 10);
+    let position = (Time / 60) * 100;
+    // console.log("GOOD", roundTo(position, 2));
+    show_time_bar.value.push(roundTo(position, 2));
+  } else {
+    console.log("BAD", INT_MIN);
+  }
+
+}
+
+function getShowTimeBar() {
+  return show_time_bar.value;
 }
 
 </script>
@@ -154,8 +206,20 @@ function handleMouseMove(event) {
         </div>
       </div>
     </div>
+    <!-- <p v-for="(value, index) in getShowTimeBar()" :key="index">
+      {{ value }}
+    </p> -->
+    <div class="time_bar">
+      <div class="time_bar__line">
+        <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar()" :key="index"
+          :style="{ left: `${value}%` }">
+          <div class="time_bar__line__time__line"></div>
+          <div class="time_bar__line__time__text">{{ value }}</div>
+        </div>
+      </div>
+    </div>
+     
     <div class="down" id="ALL">
-
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"
@@ -164,7 +228,9 @@ function handleMouseMove(event) {
         </div>
         {{ now_video_time }}
         <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
+
       </div>
+
 
       <button class="right_arrow"
         @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">123456</button>
