@@ -348,3 +348,8 @@ hr {
 .time_bar__line__time {
     flex: 1;
 }
+
+.time_bar__line__time__img{
+    width: 20px;
+    height: 20px;
+}

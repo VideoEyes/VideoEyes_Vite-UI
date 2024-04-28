@@ -10,14 +10,9 @@ import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
 import router from '../router';
 
-// const inconlist = Object.values(import.meta.glob('../picture/scene/*', { eager: true })).map((v: any) => v.default);
 
-
-//---
-
-//---
-
-let sceneStart: any = ref({});
+let sceneStart_with_index: any = ref([]);
+let sceneStart:any = ref({});
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
@@ -29,22 +24,31 @@ onMounted(() => {
   // 讀檔
   window.electron.ipcRenderer.send('read-file', 'NONE');
   window.electron.ipcRenderer.on('read-file-reply', (event, arg) => {
-    show_time_bar.value = [];
     if (arg.success) {
+      // console.log("arg", arg.data);
       for (let key in arg.data) {
+        // console.log("key", key);
         sceneStart[key] = arg.data[key]["scene-start-time"];
       }
-      // console.log("scene", sceneStart);
+      console.log("scene", Object.keys(sceneStart));
       for (const [key, value] of Object.entries(sceneStart)) {
-        // console.log("123", key, value)
+        console.log("123", key, value)
+        if (typeof value === 'object' && value !== null) {
+          if (Object.keys(value).length == 0) {
+            continue;
+          }
+        }
+        if (value == undefined || value == null || value == "" || value == "NaN" || value == false || value == true || value == "...") {
+          continue;
+        }
+        sceneStart_with_index.value.push(value);
+        console.log("sceneStart_with_index", sceneStart_with_index.value);
         calculatePosition(value, ttvalue.value)
       }
     } else {
       console.error('Error reading file:', arg.error);
     }
   });
-
-
 })
 
 const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
@@ -114,6 +118,25 @@ function handleMouseMove(event) {
   }
 
 }
+
+function get_ad_information(index) {
+  let scene_start = sceneStart_with_index.value[index];
+  window.electron.ipcRenderer.send('get_SceneData', scene_start);
+  window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
+    if (arg.success) {
+      // console.log("get_SceneData", arg.data);
+      timeSettings.value[0].placeholder = arg.data["scene-start-time"];
+      timeSettings.value[1].placeholder = arg.data["scene-end-time"];
+      timeSettings.value[2].placeholder = arg.data["scene-name"];
+
+
+    } else {
+      console.error('Error reading file:', arg.error);
+    }
+  });
+}
+
+
 function roundTo(num, decimal) {
   return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal);
 }
@@ -122,21 +145,33 @@ let show_time_bar: any = ref([]);
 function calculatePosition(time, ttvalue) {
   let caltime_sec = String(time).substring(6, 8);
   let caltime_min = String(time).substring(3, 5);
-  let INT_MIN = parseInt(caltime_min, 10);
-  // console.log("INT_MIN", INT_MIN);
-  if (ttvalue - 1 == INT_MIN) {
-    let Time = parseInt(caltime_sec, 10);
-    let position = (Time / 60) * 100;
-    // console.log("GOOD", roundTo(position, 2));
-    show_time_bar.value.push(roundTo(position, 2));
-  } else {
-    console.log("BAD", INT_MIN);
+
+  if (isNaN(Number(caltime_sec)) || isNaN(Number(caltime_min))) {
+    console.error('Invalid time format:', time);
+    return;
   }
 
+  let INT_MIN = parseInt(caltime_min, 10);
+  let Time = parseInt(caltime_sec, 10);
+  let position = (Time / 60) * 100;
+  let result = (INT_MIN * 100) + Number(roundTo(position, 2).toFixed(2));
+
+  show_time_bar.value.push(Number(result.toFixed(2)));
+  console.log("show_time_bar", show_time_bar.value);
 }
 
-function getShowTimeBar() {
-  return show_time_bar.value;
+function getShowTimeBar(ttvalue) {
+  let SHOW_TIME_BAR: any = ref([]);
+  for (let i = 0; i < show_time_bar.value.length; i++) {
+    if (show_time_bar.value[i] < ttvalue * 100 && show_time_bar.value[i] >= (ttvalue - 1) * 100) {
+      // if(show_time_bar.value[i] == "NaN"){
+      //   continue;
+      // }
+      SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
+    }
+  }
+  console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
+  return SHOW_TIME_BAR.value;
 }
 
 </script>
@@ -171,7 +206,7 @@ function getShowTimeBar() {
         <div class="ad_content_wrpaer">
           <div class="ad_time_addcontent" v-for="(timeSetting, index) in timeSettings" :key="index">
             <input type="text" class="ad_time" :placeholder="timeSetting.placeholder" required>
-            <div class="underline"></div>
+            <div class="underline">132</div>
             <label>{{ timeSetting.label }}</label>
           </div>
         </div>
@@ -211,14 +246,15 @@ function getShowTimeBar() {
     </p> -->
     <div class="time_bar">
       <div class="time_bar__line">
-        <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar()" :key="index"
+        <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
           :style="{ left: `${value}%` }">
           <div class="time_bar__line__time__line"></div>
-          <div class="time_bar__line__time__text">{{ value }}</div>
+          <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
+          <img @click="get_ad_information(index)" src="../picture/ask.png" class="time_bar__line__time__img" alt="">
         </div>
       </div>
     </div>
-     
+
     <div class="down" id="ALL">
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}

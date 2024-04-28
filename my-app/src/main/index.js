@@ -206,6 +206,32 @@ app.whenReady().then(() => {
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
+
+  ipcMain.on('get_SceneData', (event, scene_start) => {
+    let sceneData = scene_start;
+    // console.log("sceneData",sceneData);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonDataArray = Object.values(jsonData);
+      console.log("jsonDataArray",jsonDataArray);
+      let returnData = {};
+      for (let i = 0; i < jsonDataArray.length; i++) {
+        if (jsonDataArray[i]["scene-start-time"] == sceneData) {
+          returnData["AD-start-time"] =  jsonDataArray[i]["AD-start-time"];
+          returnData["scene-end-time"] =  jsonDataArray[i]["scene-end-time"];
+          returnData["scene-start-time"] =  jsonDataArray[i]["scene-start-time"];
+          returnData["AD-content"] =  jsonDataArray[i]["AD-content"][0];
+          console.log('SUCCESS:', returnData);
+        }
+      }
+      // console.log('SUCCESS:', returnData);
+      event.reply('get_SceneData-reply', { success: true, data: returnData });
+    });
+  });
 })
 
 
@@ -257,11 +283,6 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
-
-
-
-
 /**
 
  * @param options: { title:  String, defaultPath: String, buttonLabel: String, filters: area}
