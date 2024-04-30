@@ -172,9 +172,9 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
-  ipcMain.on('write-file', (event, filePath, content) => {
-    const absolutePath = path.join(__dirname, filePath);
-    fs.writeFile(absolutePath, content, 'utf8', (err) => {
+  ipcMain.on('write-file', (event, content) => {
+    console.log('write-file', "1616510v");
+    fs.writeFile(output_json, content, 'utf8', (err) => {
       if (err) {
         console.error('ERROR:', err);
         return;
@@ -183,17 +183,6 @@ app.whenReady().then(() => {
     });
   });
 
-
-  ipcMain.on('write-file', (event, filePath, content) => {
-    const absolutePath = path.join(__dirname, filePath);
-    fs.writeFile(absolutePath, content, 'utf8', (err) => {
-      if (err) {
-        console.error('ERROR:', err);
-        return;
-      }
-      console.log('SUCCESS');
-    });
-  });
 
   ipcMain.on('read-file', (event, filePath) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
@@ -217,14 +206,14 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-      console.log("jsonDataArray",jsonDataArray);
+      console.log("jsonDataArray", jsonDataArray);
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
-          returnData["AD-start-time"] =  jsonDataArray[i]["AD-start-time"];
-          returnData["scene-end-time"] =  jsonDataArray[i]["scene-end-time"];
-          returnData["scene-start-time"] =  jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] =  jsonDataArray[i]["AD-content"][0];
+          returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
+          returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
+          returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
+          returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
           console.log('SUCCESS:', returnData);
         }
       }

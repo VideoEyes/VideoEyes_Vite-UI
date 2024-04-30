@@ -5,6 +5,7 @@ import { useWindowSize } from "@vueuse/core";
 import listen from "../picture/listen.png"
 import store from "../picture/store.png"
 import hint from "../picture/ask.png"
+import iconUrl from "../picture/Hint.png"
 import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
@@ -13,8 +14,10 @@ import router from '../router';
 
 let sceneStart_with_index: any = ref([]);
 let sceneStart: any = ref({});
+let KEY_main_json = ref([] as any);
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
+
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
   let videoElement = document.querySelector('video') as HTMLVideoElement;
@@ -27,7 +30,8 @@ onMounted(() => {
     if (arg.success) {
       // console.log("arg", arg.data);
       for (let key in arg.data) {
-        // console.log("key", key);
+        KEY_main_json.value.push(key);
+        // console.log("scene", key);
         sceneStart[key] = arg.data[key]["scene-start-time"];
       }
       console.log("scene", Object.keys(sceneStart));
@@ -42,7 +46,7 @@ onMounted(() => {
           continue;
         }
         sceneStart_with_index.value.push(value);
-        console.log("sceneStart_with_index", sceneStart_with_index.value);
+        // console.log("sceneStart_with_index", sceneStart_with_index.value);
         calculatePosition(value, ttvalue.value)
       }
     } else {
@@ -53,13 +57,61 @@ onMounted(() => {
 
 const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
 //=======================
+let isVisible = ref(false);
+let message = ref('');
+let title = ref('允許新增口述影像');
+let AD_ALL_time = ref({} as any);
+let textareaValue = ref('');
 function new_AD() {
-  const text = document.getElementById('new_AD') as HTMLSourceElement;
-  // 寫檔到aa.txt
-  window.electron.ipcRenderer.send('write-file', './aa.txt', '511561512');
   // console.log('write-file');
-  AD_cursor.style.cursor = 'crosshair';
+  this.message = "可以在右上方參數設定填寫口述影像時間，並在下方新增口述影像內容。";
+  this.isVisible = true;
+  timeSettings.value[0].value = "";
+  timeSettings.value[1].value = "";
+  timeSettings.value[2].value = "";
+  setTimeout(() => {
+    this.isVisible = false;
+  }, 5000);
 }
+
+const Store_AD = (e: MouseEvent) => {
+  console.log("KEY_main_json", KEY_main_json.value);
+  let last_ID = KEY_main_json[KEY_main_json.value.length - 1];
+  last_ID = parseInt(last_ID.substring(2)) + 1;
+  last_ID = "AD" + last_ID;
+  let data = {
+    [last_ID]: {
+      "scene-start-time": timeSettings.value[0].value,
+      "scene-end-time": timeSettings.value[1].value,
+      "AD-start-time": timeSettings.value[2].value,
+      "AD-content": [textareaValue, "", "", ""],
+      "AD-content-ID": 0
+    }
+  };
+  console.log("data", data);
+  // 寫檔到aa.txt
+  window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
+};
+
+
+// function Store_AD() {
+//   console.log("KEY_main_json", KEY_main_json.value);
+//   let last_ID = KEY_main_json[KEY_main_json.value.length - 1];
+//   last_ID = parseInt(last_ID.substring(2)) + 1;
+//   last_ID = "AD" + last_ID;
+//   let data = {
+//     [last_ID]: {
+//       "scene-start-time": timeSettings.value[0].value,
+//       "scene-end-time": timeSettings.value[1].value,
+//       "AD-start-time": timeSettings.value[2].value,
+//       "AD-content": [textareaValue, "", "", ""],
+//       "AD-content-ID": 0
+//     }
+//   };
+//   console.log("data", data);
+//   // 寫檔到aa.txt
+//   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
+// }
 
 //=======================
 
@@ -76,7 +128,7 @@ const state = reactive({
     { href: '#', id: 'store', icon: "", alt: 'Services', content: 'Demo' },
   ],
   windows: [
-    { id: 'window1', number: 1, clicked: false, color: 'rgb(255,255,255)' },
+    { id: 'window1', number: 1, clicked: true, color: 'rgb(255,255,255)' },
     { id: 'window2', number: 2, clicked: false, color: 'rgb(255,255,255)' },
     { id: 'window3', number: 3, clicked: false, color: 'rgb(255,255,255)' },
     { id: 'window4', number: 4, clicked: false, color: 'rgb(255,255,255)' },
@@ -119,10 +171,10 @@ function handleMouseMove(event) {
 
 }
 
-function get_ad_information(index,ttvalue) {
+function get_ad_information(index, ttvalue) {
   var temp = 0;
-  for(var i = 0; i < sceneStart_with_index.value.length; i++){
-    if(parseInt(sceneStart_with_index.value[i].substring(3,5),10) == ttvalue  - 1){
+  for (var i = 0; i < sceneStart_with_index.value.length; i++) {
+    if (parseInt(sceneStart_with_index.value[i].substring(3, 5), 10) == ttvalue - 1) {
       temp = i;
       break;
     }
@@ -185,13 +237,12 @@ function getShowTimeBar(ttvalue) {
 <template>
   <div class="content">
     <div class="title">Project Name</div>
-
     <hr>
     <div class="top">
       <div class="top__left">
         <div class="left_title">
           <div class="edit-button">
-            <el-button type="primary" id="new_AD" @click="new_AD">新增</el-button>
+            <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
             <el-button type="danger">刪除</el-button>
 
           </div>
@@ -230,19 +281,21 @@ function getShowTimeBar(ttvalue) {
           <hr>
           <div class="write_ad">
             <form action="/test.aspx" method="post">
-              <textarea class="textarea_size" name="" id="" cols="" rows="" style="resize:none;"
-                placeholder=""></textarea>
+              <textarea class="textarea_size" v-model="textareaValue" style="resize:none; " placeholder=""></textarea>
             </form>
           </div>
           <div class="ad_tool">
-            <button class="btn">
-              <span>STORE</span>
+            <button class="btn" @click="Store_AD" id="btn_add">
+              <span>新增</span>
             </button>
             <button class="btn">
-              <span>STORE</span>
+              <span>刪除</span>
             </button>
             <button class="btn">
-              <span>STORE</span>
+              <span>儲存</span>
+            </button>
+            <button class="btn">
+              <span>取消</span>
             </button>
           </div>
         </div>
@@ -257,13 +310,26 @@ function getShowTimeBar(ttvalue) {
           :style="{ left: `${value}%` }">
           <div class="time_bar__line__time__line"></div>
           <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
-          <img @click="get_ad_information(index,ttvalue)" src="../picture/ask.png" class="time_bar__line__time__img" alt="">
+          <img @click="get_ad_information(index, ttvalue)" src="../picture/ask.png" class="time_bar__line__time__img"
+            alt="">
         </div>
       </div>
     </div>
 
     <div class="down" id="ALL">
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
+
+      <div v-if="isVisible" class="notification">
+        <div class="notification-icon">
+          <img :src="iconUrl" alt="icon" />
+          <h4 class="notification-title">{{ title }}</h4>
+        </div>
+        <div class="notification-content">
+
+          <p class="notification-message">{{ message }}</p>
+        </div>
+      </div>
+
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"
           :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
