@@ -12,7 +12,7 @@ import router from '../router';
 
 
 let sceneStart_with_index: any = ref([]);
-let sceneStart:any = ref({});
+let sceneStart: any = ref({});
 onMounted(() => {
   const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
@@ -82,9 +82,9 @@ const state = reactive({
     { id: 'window4', number: 4, clicked: false, color: 'rgb(255,255,255)' },
   ],
   timeSettings: [
-    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time1', checkboxId: 'time1' },
-    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time2', checkboxId: 'time2' },
-    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time3', checkboxId: 'time3' },
+    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time1', checkboxId: 'time1', value: '' },
+    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time2', checkboxId: 'time2', value: '' },
+    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time3', checkboxId: 'time3', value: '' },
   ],
 })
 const { tools, windows, timeSettings } = toRefs(state)
@@ -119,17 +119,23 @@ function handleMouseMove(event) {
 
 }
 
-function get_ad_information(index) {
+function get_ad_information(index,ttvalue) {
+  var temp = 0;
+  for(var i = 0; i < sceneStart_with_index.value.length; i++){
+    if(parseInt(sceneStart_with_index.value[i].substring(3,5),10) == ttvalue  - 1){
+      temp = i;
+      break;
+    }
+  }
+  index = index + temp;
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
       // console.log("get_SceneData", arg.data);
-      timeSettings.value[0].placeholder = arg.data["scene-start-time"];
-      timeSettings.value[1].placeholder = arg.data["scene-end-time"];
-      timeSettings.value[2].placeholder = arg.data["scene-name"];
-
-
+      timeSettings.value[0].value = arg.data["scene-start-time"];
+      timeSettings.value[1].value = arg.data["scene-end-time"];
+      timeSettings.value[2].value = arg.data["AD-start-time"];
     } else {
       console.error('Error reading file:', arg.error);
     }
@@ -205,8 +211,9 @@ function getShowTimeBar(ttvalue) {
         </div>
         <div class="ad_content_wrpaer">
           <div class="ad_time_addcontent" v-for="(timeSetting, index) in timeSettings" :key="index">
-            <input type="text" class="ad_time" :placeholder="timeSetting.placeholder" required>
-            <div class="underline">132</div>
+            <input type="text" class="ad_time" v-model="timeSetting.value" :placeholder="timeSetting.placeholder"
+              required>
+            <div class="underline"></div>
             <label>{{ timeSetting.label }}</label>
           </div>
         </div>
@@ -250,7 +257,7 @@ function getShowTimeBar(ttvalue) {
           :style="{ left: `${value}%` }">
           <div class="time_bar__line__time__line"></div>
           <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
-          <img @click="get_ad_information(index)" src="../picture/ask.png" class="time_bar__line__time__img" alt="">
+          <img @click="get_ad_information(index,ttvalue)" src="../picture/ask.png" class="time_bar__line__time__img" alt="">
         </div>
       </div>
     </div>
