@@ -217,7 +217,7 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-      console.log("jsonDataArray",jsonDataArray);
+      // console.log("jsonDataArray",jsonDataArray);
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
@@ -225,7 +225,7 @@ app.whenReady().then(() => {
           returnData["scene-end-time"] =  jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] =  jsonDataArray[i]["scene-start-time"];
           returnData["AD-content"] =  jsonDataArray[i]["AD-content"][0];
-          console.log('SUCCESS:', returnData);
+          // console.log('SUCCESS:', returnData);
         }
       }
       // console.log('SUCCESS:', returnData);

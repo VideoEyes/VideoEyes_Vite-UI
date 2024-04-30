@@ -12,6 +12,9 @@
     <div class="action">
       <a target="_blank" rel="noreferrer" @click="handleFileChange">選擇檔案</a>
     </div>
+    <div class="action">
+      <a target="_blank" rel="noreferrer" @click="openOldFile">開啟舊檔</a>
+    </div>
   </div>
 
   <div v-if="overlayVisible" class="overlay"></div>
@@ -28,8 +31,11 @@ const overlayVisible = ref(false);
 const handleFileChange = (e: MouseEvent) => {
   // 啟動覆蓋層
   overlayVisible.value = true;
-
   window.electron.ipcRenderer.send('file');
+};
+
+const openOldFile = (e: MouseEvent) => {
+  router.push('/edit');
 };
 
 window.electron.ipcRenderer.on('get-video', (event, arg) => {
