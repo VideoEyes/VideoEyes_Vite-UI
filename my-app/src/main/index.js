@@ -197,7 +197,24 @@ app.whenReady().then(() => {
       }
       jsonData = { ...jsonData, ...contentObject }
       console.log("jsonData", jsonData);
-      const updatedJsonData = JSON.stringify(jsonData, null, 4);
+      
+
+/////////sort json by time
+      const jsonArray = Object.entries(jsonData); // Convert json to array
+      jsonArray.sort((a, b) => { //定義排序方式
+        const timeA = a[1]['scene-start-time'];
+        const timeB = b[1]['scene-start-time'];
+        const [hourA, minA, secA, milliA] = timeA.split(/[:.]/);
+        const [hourB, minB, secB, milliB] = timeB.split(/[:.]/);
+        return (hourA - hourB) * 3600000 + (minA - minB) * 60000 + (secA - secB) * 1000 + (milliA - milliB);
+      });
+/////
+      const sortedJson = {}; // Convert array to json
+      jsonArray.forEach(([key, value]) => {
+        sortedJson[key] = value;
+      });
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+//////
 
       fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
         if (err2) {
