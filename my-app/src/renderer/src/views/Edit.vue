@@ -12,7 +12,8 @@ import path from 'node:path'
 import router from '../router';
 
 
-let sceneStart_with_index: any = ref([]);
+
+let sceneStart_with_index = ref([] as any);
 let sceneStart: any = ref({});
 let KEY_main_json = ref([] as any);
 onMounted(() => {
@@ -24,11 +25,16 @@ onMounted(() => {
   videoElement.onloadedmetadata = () => {
     totaltime.value = videoElement.duration;
   };
-  // 讀檔
+  initialalize();
+})
+function initialalize() {
+  sceneStart_with_index = ref([]);
+  sceneStart = ref({});
+  KEY_main_json = ref([]);
   window.electron.ipcRenderer.send('read-file', 'NONE');
   window.electron.ipcRenderer.on('read-file-reply', (event, arg) => {
     if (arg.success) {
-      // console.log("arg", arg.data);
+      console.log("arg", arg.data);
       for (let key in arg.data) {
         KEY_main_json.value.push(key);
         // console.log("scene", key);
@@ -45,6 +51,7 @@ onMounted(() => {
         if (value == undefined || value == null || value == "" || value == "NaN" || value == false || value == true || value == "...") {
           continue;
         }
+        console.log("sceneStart_with_index", value);
         sceneStart_with_index.value.push(value);
         // console.log("sceneStart_with_index", sceneStart_with_index.value);
         calculatePosition(value, ttvalue.value)
@@ -53,7 +60,9 @@ onMounted(() => {
       console.error('Error reading file:', arg.error);
     }
   });
-})
+}
+
+
 
 const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
 //=======================
@@ -74,44 +83,40 @@ function new_AD() {
   }, 5000);
 }
 
-const Store_AD = (e: MouseEvent) => {
-  console.log("KEY_main_json", KEY_main_json.value);
-  let last_ID = KEY_main_json[KEY_main_json.value.length - 1];
-  last_ID = parseInt(last_ID.substring(2)) + 1;
+
+function Store_AD() {
+  if (!KEY_main_json.value.length) {
+    console.error("KEY_main_json is empty.");
+    return;
+  }
+  console.log("KEY_main_json is not empty", KEY_main_json.value);
+
+  let last_ID = KEY_main_json.value[KEY_main_json.value.length - 1];
+  last_ID = parseInt(last_ID.replace(/[^0-9]/g, "")) + 1;
   last_ID = "AD" + last_ID;
+
   let data = {
     [last_ID]: {
       "scene-start-time": timeSettings.value[0].value,
       "scene-end-time": timeSettings.value[1].value,
       "AD-start-time": timeSettings.value[2].value,
-      "AD-content": [textareaValue, "", "", ""],
+      "AD-content": [textareaValue.value, "", "", ""],
       "AD-content-ID": 0
     }
   };
-  console.log("data", data);
-  // 寫檔到aa.txt
+
+  console.log("data to be sent", data);
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
-};
+  window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
+    if (arg.success) {
+      console.log('File written successfully', arg.data);
+      initialalize();
 
-
-// function Store_AD() {
-//   console.log("KEY_main_json", KEY_main_json.value);
-//   let last_ID = KEY_main_json[KEY_main_json.value.length - 1];
-//   last_ID = parseInt(last_ID.substring(2)) + 1;
-//   last_ID = "AD" + last_ID;
-//   let data = {
-//     [last_ID]: {
-//       "scene-start-time": timeSettings.value[0].value,
-//       "scene-end-time": timeSettings.value[1].value,
-//       "AD-start-time": timeSettings.value[2].value,
-//       "AD-content": [textareaValue, "", "", ""],
-//       "AD-content-ID": 0
-//     }
-//   };
-//   console.log("data", data);
-//   // 寫檔到aa.txt
-//   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
-// }
+    } else {
+      console.error('Error writing file:', arg.error);
+    }
+  });
+}
 
 //=======================
 
@@ -198,7 +203,7 @@ function get_ad_information(index, ttvalue) {
 function roundTo(num, decimal) {
   return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal);
 }
-let show_time_bar: any = ref([]);
+let show_time_bar = ref([] as any);
 
 function calculatePosition(time, ttvalue) {
   let caltime_sec = String(time).substring(6, 8);
@@ -219,16 +224,14 @@ function calculatePosition(time, ttvalue) {
 }
 
 function getShowTimeBar(ttvalue) {
-  let SHOW_TIME_BAR: any = ref([]);
+  let SHOW_TIME_BAR = ref([] as any);
   for (let i = 0; i < show_time_bar.value.length; i++) {
     if (show_time_bar.value[i] < ttvalue * 100 && show_time_bar.value[i] >= (ttvalue - 1) * 100) {
-      // if(show_time_bar.value[i] == "NaN"){
-      //   continue;
-      // }
       SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
     }
   }
   console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
+  
   return SHOW_TIME_BAR.value;
 }
 
@@ -285,7 +288,8 @@ function getShowTimeBar(ttvalue) {
             </form>
           </div>
           <div class="ad_tool">
-            <button class="btn" @click="Store_AD" id="btn_add">
+            <div class="ad_tool_add" @click="Store_AD">要新增</div>
+            <button class="btn" id="btn_add">
               <span>新增</span>
             </button>
             <button class="btn">

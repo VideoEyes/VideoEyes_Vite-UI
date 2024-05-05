@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
+
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
@@ -173,28 +174,67 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('write-file', (event, content) => {
-    console.log('write-file', "1616510v");
-    fs.writeFile(output_json, content, 'utf8', (err) => {
+    fs.readFile(output_json, "utf8", (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
+        console.error("Error reading file:", err);
         return;
       }
-      console.log('SUCCESS');
+      let jsonData;
+      try {
+        jsonData = JSON.parse(data);
+        // console.log("jsonData", content);
+      } catch (parseError) {
+        console.error("Error parsing JSON data:", parseError);
+        return;
+      }
+      let contentObject;
+      try {
+        contentObject = JSON.parse(content);
+      } catch (error) {
+        console.error('Parsing error:', error);
+      }
+      jsonData = { ...jsonData, ...contentObject }
+      // console.log("jsonData", jsonData);
+      const updatedJsonData = JSON.stringify(jsonData, null, 4);
+      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+        if (err2) {
+          console.error("ERROR:", err2);
+          return;
+        }
+        // console.log('File successfully written!');
+        event.reply('write-file-reply', { success: true ,data :updatedJsonData});
+      });
     });
+
   });
 
-
-  ipcMain.on('read-file', (event, filePath) => {
+  updateIPCListener('read-file', (event, filePath) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
-      if (err) {
-        console.error('ERROR:', err);
-        return;
-      }
-      const jsonData = JSON.parse(data);
-      // console.log('SUCCESS:', jsonData);
-      event.reply('read-file-reply', { success: true, data: jsonData });
+        if (err) {
+            console.error('ERROR:', err);
+            event.reply('read-file-reply', { success: false, error: err });
+            return;
+        }
+        console.log('jsonData:', data);
+        const jsonData = JSON.parse(data);
+        event.reply('read-file-reply', { success: true, data: jsonData });
     });
-  });
+});
+
+
+  // ipcMain.on('read-file', (event, filePath) => {
+  //   fs.readFile(output_json, 'utf8', (err, data) => {
+  //     if (err) {
+  //       console.error('ERROR:', err);
+  //       return;
+  //     }
+  //     console.log('jsonData:', data);
+  //     const jsonData = JSON.parse(data);
+      
+  //     event.reply('read-file-reply', { success: true, data: jsonData });
+  //   });
+    
+  // });
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start;
@@ -210,10 +250,10 @@ app.whenReady().then(() => {
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
-          returnData["AD-start-time"] =  jsonDataArray[i]["AD-start-time"];
-          returnData["scene-end-time"] =  jsonDataArray[i]["scene-end-time"];
-          returnData["scene-start-time"] =  jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] =  jsonDataArray[i]["AD-content"][0];
+          returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
+          returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
+          returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
+          returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
           // console.log('SUCCESS:', returnData);
         }
       }
@@ -263,6 +303,14 @@ function call_pySceneDetect(event) {
     }
   });
 }
+
+function updateIPCListener(eventType, listener) {
+  console.log('updateIPCListener:', eventType);
+  ipcMain.removeAllListeners(eventType);
+
+  ipcMain.on(eventType, listener);
+}
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
