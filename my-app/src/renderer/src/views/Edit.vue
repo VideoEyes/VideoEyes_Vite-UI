@@ -85,6 +85,7 @@ function new_AD() {
 
 
 function Store_AD() {
+  
   if (!KEY_main_json.value.length) {
     console.error("KEY_main_json is empty.");
     return;
@@ -107,16 +108,18 @@ function Store_AD() {
 
   console.log("data to be sent", data);
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
+  
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
+    
     if (arg.success) {
       initialalize();
       window.location.reload();
-
-
     } else {
       console.error('Error writing file:', arg.error);
     }
+    
   });
+  window.location.reload();
 }
 
 //=======================
