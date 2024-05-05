@@ -110,6 +110,9 @@ function Store_AD() {
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
     if (arg.success) {
       initialalize();
+      window.location.reload();
+
+
     } else {
       console.error('Error writing file:', arg.error);
     }
@@ -229,7 +232,7 @@ function getShowTimeBar(ttvalue) {
     }
   }
   console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
-  
+
   return SHOW_TIME_BAR.value;
 }
 

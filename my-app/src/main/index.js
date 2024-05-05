@@ -179,30 +179,32 @@ app.whenReady().then(() => {
         console.error("Error reading file:", err);
         return;
       }
+
       let jsonData;
       try {
         jsonData = JSON.parse(data);
-        // console.log("jsonData", content);
+        console.log("jsonData", content);
       } catch (parseError) {
         console.error("Error parsing JSON data:", parseError);
         return;
       }
       let contentObject;
+
       try {
         contentObject = JSON.parse(content);
       } catch (error) {
         console.error('Parsing error:', error);
       }
       jsonData = { ...jsonData, ...contentObject }
-      // console.log("jsonData", jsonData);
+      console.log("jsonData", jsonData);
       const updatedJsonData = JSON.stringify(jsonData, null, 4);
+
       fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
         if (err2) {
           console.error("ERROR:", err2);
           return;
         }
-        // console.log('File successfully written!');
-        event.reply('write-file-reply', { success: true ,data :updatedJsonData});
+        console.log('File successfully written!');
       });
     });
 
@@ -215,9 +217,8 @@ app.whenReady().then(() => {
         console.error('ERROR:', err);
         return;
       }
-      console.log('jsonData:', data);
       const jsonData = JSON.parse(data);
-      
+      // console.log('SUCCESS:', jsonData);
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
