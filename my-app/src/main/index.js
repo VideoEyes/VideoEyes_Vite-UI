@@ -208,33 +208,19 @@ app.whenReady().then(() => {
 
   });
 
-  updateIPCListener('read-file', (event, filePath) => {
+
+  ipcMain.on('read-file', (event, filePath) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
-        if (err) {
-            console.error('ERROR:', err);
-            event.reply('read-file-reply', { success: false, error: err });
-            return;
-        }
-        console.log('jsonData:', data);
-        const jsonData = JSON.parse(data);
-        event.reply('read-file-reply', { success: true, data: jsonData });
-    });
-});
-
-
-  // ipcMain.on('read-file', (event, filePath) => {
-  //   fs.readFile(output_json, 'utf8', (err, data) => {
-  //     if (err) {
-  //       console.error('ERROR:', err);
-  //       return;
-  //     }
-  //     console.log('jsonData:', data);
-  //     const jsonData = JSON.parse(data);
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      console.log('jsonData:', data);
+      const jsonData = JSON.parse(data);
       
-  //     event.reply('read-file-reply', { success: true, data: jsonData });
-  //   });
-    
-  // });
+      event.reply('read-file-reply', { success: true, data: jsonData });
+    });
+  });
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start;
@@ -303,14 +289,6 @@ function call_pySceneDetect(event) {
     }
   });
 }
-
-function updateIPCListener(eventType, listener) {
-  console.log('updateIPCListener:', eventType);
-  ipcMain.removeAllListeners(eventType);
-
-  ipcMain.on(eventType, listener);
-}
-
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

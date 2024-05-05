@@ -109,9 +109,7 @@ function Store_AD() {
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
     if (arg.success) {
-      console.log('File written successfully', arg.data);
       initialalize();
-
     } else {
       console.error('Error writing file:', arg.error);
     }
