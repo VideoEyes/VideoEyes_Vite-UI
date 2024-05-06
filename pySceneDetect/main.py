@@ -1,4 +1,4 @@
-#usage : python main.py [video_dir] [json_dir] [fps] [min_scene_length_seconds] [output_clips_dir]
+#usage : python main.py [video_dir] [json_dir] [fps] [min_scene_length_seconds] [output_clips_folder]
 
 # from csv import writer
 from scenedetect import SceneManager, open_video, AdaptiveDetector ,split_video_ffmpeg #ContentDetector , ThresholdDetector

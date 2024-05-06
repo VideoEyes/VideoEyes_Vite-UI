@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
-import gemini from 'gemini.js'
+import { constants } from './constants'
 
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -185,6 +185,11 @@ app.whenReady().then(() => {
       event.reply('get_SceneData-reply', { success: true, data: returnData });
     });
   });
+  
+  ipcMain.on('start_gemini', (event, arg) => {
+    gemini_process_all(output_json);
+    event.reply('gemini_end', "Success")
+  });
 })
 
 
@@ -208,10 +213,12 @@ function call_pySceneDetect(event) {
 
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
 
-  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
-  event.reply('meow', cmd);
-  console.log("123", USER_DATA_PATH);
-  console.log(cmd);
+  const FPS = 30;
+  const MIN_SCENE_LEN = 10;
+  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`;
+  // event.reply('meow', cmd);
+  // console.log("123", USER_DATA_PATH);
+  // console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error}`);
@@ -227,6 +234,8 @@ function call_pySceneDetect(event) {
     }
   });
 }
+
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -249,3 +258,98 @@ app.on('window-all-closed', () => {
 
 
 
+
+
+
+const { Storage } = require('@google-cloud/storage');
+
+async function uploadFile(destFileName, filePath, bucketName = 'gemini-ad-gen') {
+    const storage = new Storage();
+    const options = {
+        destination: destFileName,
+    };
+
+    await storage.bucket(bucketName).upload(filePath, options);
+    console.log(`${filePath} uploaded to ${bucketName}`);
+    return `gs://${bucketName}/${destFileName}`;
+}
+
+async function sendMultiModalPromptWithVideo(
+    projectId = '	gemini-rain-py',
+    location = 'us-central1',
+    model = 'gemini-1.0-pro-vision',
+    uri = 'gs://gemini-ad-gen/pixel8.mp4'
+) {
+    // Initialize Vertex with your Cloud project and location
+    const vertexAI = new VertexAI({ project: projectId, location: location });
+
+    const generativeVisionModel = vertexAI.getGenerativeModel({
+        model: model,
+        
+    });
+
+    // Pass multimodal prompt
+    const request = {
+        contents: [
+            {
+                role: 'user',
+                parts: [
+                    {
+                        fileData: {
+                            fileUri: uri,
+                            mimeType: 'video/mp4',
+                        },
+                    },
+                    {
+                        text: 'Describe this video.'
+                        //'你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可。將不確定的是誤用A、B、C...表示',
+                    },
+                ],
+            },
+        ],
+        generationConfig: {
+            temperature: 0.2,
+            topP: 0.4,
+            // topK: 2,
+            // candidateCount: integer,
+            // maxOutputTokens: integer,
+            // stopSequences: [
+            //   string
+            // ]
+          }
+    };
+
+    // Create the response
+    const response = await generativeVisionModel.generateContent(request);
+    // Wait for the response to complete
+    const aggregatedResponse = await response.response;
+    // Select the text from the response
+    const fullTextResponse =
+        aggregatedResponse.candidates[0].content.parts[0].text;
+
+    console.log(fullTextResponse);
+    return fullTextResponse;
+}
+
+async function gemini_process_all(AD_json, bucketName = 'gemini-ad-gen') {
+    //read json file
+    const fs = require('fs');
+    const path = require('path');
+    //path: AD_json
+    fs.readFile(AD_json, 'utf8', async (err, data) => {
+        if (err) {
+            console.error('ERROR:', err);
+            return;
+        }
+        const jsonData = JSON.parse(data);
+        const jsonIndex = Object.keys(jsonData);
+        console.log(jsonIndex);
+        for(const key of jsonIndex){
+            const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
+            const uri = await uploadFile(filePath, filePath, bucketName);
+            const response = await sendMultiModalPromptWithVideo(uri);
+            jsonData[key]["AD-content"] = response;
+        }
+        fs.writeFileSync(AD_json, JSON.stringify(jsonData));
+    });
+}
