@@ -5,6 +5,8 @@ import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
+import gemini from 'gemini.js'
+
 const { dialog } = require('electron')
 const fs = require('fs')
 const path = require('path')
@@ -45,55 +47,6 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), { hash: 'home' }) //here
   }
-}
-
-async function call_vertexAI(projectId = 'duet-ai-rain-py',
-  location = 'asia-east1',
-  model = 'gemini-1.0-pro-vision',
-  video = PROJECT_PATH + '/video/video.mp4',
-  mimeType = 'video/mp4'
-) {
-
-  // Initialize Vertex with your Cloud project and location
-  const vertexAI = new VertexAI({ project: projectId, location: location });
-
-  // Instantiate the model
-  const generativeVisionModel = vertexAI.getGenerativeModel({
-    model: model,
-  });
-
-  // For images, the SDK supports both Google Cloud Storage URI and base64 strings
-  const filePart = {
-    fileData: {
-      fileUri: image,
-      mimeType: mimeType,
-    },
-  };
-
-  const textPart = {
-    text: 'You are an audio description generator. Generate a description for this video.',
-  };
-
-  const request = {
-    contents: [{ role: 'user', parts: [filePart, textPart] }],
-  };
-
-  console.log('Prompt Text:');
-  console.log(request.contents[0].parts[1].text);
-
-  console.log('Non-Streaming Response Text:');
-  // Create the response stream
-  const responseStream =
-    await generativeVisionModel.generateContentStream(request);
-
-  // Wait for the response stream to complete
-  const aggregatedResponse = await responseStream.response;
-
-  // Select the text from the response
-  const fullTextResponse =
-    aggregatedResponse.candidates[0].content.parts[0].text;
-
-  console.log(fullTextResponse);
 }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
