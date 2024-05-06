@@ -193,9 +193,9 @@ function call_pySceneDetect(event) {
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
   // const output_image = path.join(USER_DATA_PATH, 'image');
 
-  const output_json_dir = path.dirname(output_json);
-  if (!fs.existsSync(output_json_dir)) {
-    fs.mkdirSync(output_json_dir, { recursive: true });
+  const output_json_folder = path.dirname(output_json);
+  if (!fs.existsSync(output_json_folder)) {
+    fs.mkdirSync(output_json_folder, { recursive: true });
   }
   fs.writeFileSync(output_json, '');
   // if (!fs.existsSync(output_image)) {

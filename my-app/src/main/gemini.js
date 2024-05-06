@@ -1,7 +1,9 @@
+import PATH from './PATH';
+
 const { VertexAI } = require('@google-cloud/vertexai');
 const { Storage } = require('@google-cloud/storage');
 
-async function uploadFile(destFileName, filePath, bucketName) {
+async function uploadFile(destFileName, filePath, bucketName = 'gemini-ad-gen') {
     const storage = new Storage();
     const options = {
         destination: destFileName,
@@ -67,4 +69,24 @@ async function sendMultiModalPromptWithVideo(
 
     console.log(fullTextResponse);
     return fullTextResponse;
+}
+
+async function gemini_process_all(AD_json, destFileName, bucketName = 'gemini-ad-gen') {
+    //read json file
+    const fs = require('fs');
+    const path = require('path');
+    //path: AD_json
+    fs.readFile(AD_json, 'utf8', async (err, data) => {
+        if (err) {
+            console.error('ERROR:', err);
+            return;
+        }
+        const jsonData = JSON.parse(data);
+        const jsonIndex = Object.keys(jsonData);
+        for(const key of jsonIndex){
+            const filePath = path.join(PATH.CLIPS_FOLDER, key + '.mp4');
+            const uri = await uploadFile(filePath, filePath, bucketName);
+            const response = await sendMultiModalPromptWithVideo(uri);
+            jsonData[key]["AD-content"] = response;
+    });
 }
