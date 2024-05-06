@@ -1,16 +1,15 @@
 #usage : python main.py [video_dir] [json_dir] 
 
-import csv
+# from csv import writer
 from scenedetect import SceneManager, open_video, AdaptiveDetector #ContentDetector , ThresholdDetector
-from scenedetect.scene_manager import save_images
-import sys
-from datetime import datetime
-import json
+# from scenedetect.scene_manager import save_images
+from sys import argv
+from json import dump
 
 # 第一個參數是腳本名稱本身
 # 從第二個參數開始是用戶提供的參數
-script_name = sys.argv[0]
-arguments = sys.argv[1:]
+script_name = argv[0]
+arguments = argv[1:]
 
 # find_scenes 函式會回傳一個影片中的所有場景(list of tuple containing start and end timecode in class [Timecode])
 def find_scenes(video_path, threshold=12.0):
@@ -24,13 +23,13 @@ def find_scenes(video_path, threshold=12.0):
     # for each scene that was found.
     return scene_manager.get_scene_list()
 
-# 將場景資訊寫入 csv 檔案
-def save_scenes_to_csv(scene_list, output_file):
-    with open(output_file, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['Scene', 'Start Time', 'End Time'])
-        for i, scene in enumerate(scene_list):
-            writer.writerow([i+1, scene[0], scene[1]])
+# # 將場景資訊寫入 csv 檔案
+# def save_scenes_to_csv(scene_list, output_file):
+#     with open(output_file, 'w', newline='') as csvfile:
+#         writer = writer(csvfile)
+#         writer.writerow(['Scene', 'Start Time', 'End Time'])
+#         for i, scene in enumerate(scene_list):
+#             writer.writerow([i+1, scene[0], scene[1]])
 
 def save_scenes_to_json(scene_list, output_file):
     outer_dict = {}
@@ -43,7 +42,7 @@ def save_scenes_to_json(scene_list, output_file):
         inner_dict['AD-content-ID'] = 0
         outer_dict[i] = inner_dict
     with open(output_file, "w") as json_file:
-        json.dump(outer_dict, json_file, indent=4)
+        dump(outer_dict, json_file, indent=4)
 
 input_video_path = arguments[0] #"D:\\meowVue\\pySceneDetect\\vid\orig\\net.mp4"
 output_json_path = arguments[1]
