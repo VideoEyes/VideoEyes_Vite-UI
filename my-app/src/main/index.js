@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import mainEXE from '../../resources/main.exe?asset&asarUnpack'
+import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -9,6 +11,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
 
 function createWindow() {
@@ -49,10 +52,10 @@ async function call_vertexAI(projectId = 'duet-ai-rain-py',
   model = 'gemini-1.0-pro-vision',
   video = PROJECT_PATH + '/video/video.mp4',
   mimeType = 'video/mp4'
-){
+) {
 
   // Initialize Vertex with your Cloud project and location
-  const vertexAI = new VertexAI({project: projectId, location: location});
+  const vertexAI = new VertexAI({ project: projectId, location: location });
 
   // Instantiate the model
   const generativeVisionModel = vertexAI.getGenerativeModel({
@@ -72,7 +75,7 @@ async function call_vertexAI(projectId = 'duet-ai-rain-py',
   };
 
   const request = {
-    contents: [{role: 'user', parts: [filePart, textPart]}],
+    contents: [{ role: 'user', parts: [filePart, textPart] }],
   };
 
   console.log('Prompt Text:');
@@ -155,6 +158,12 @@ app.whenReady().then(() => {
     event.returnValue = output_file
   })
 
+  //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
+  ipcMain.on('start_PySceneDetect', async (event, arg) => {
+    call_pySceneDetect(event)
+    console.log('start PySceneDetect now')
+  })
+
   createWindow()
 
   app.on('activate', function () {
@@ -162,32 +171,107 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  ipcMain.on('write-file', (event, filePath, content) => {
+    const absolutePath = path.join(__dirname, filePath);
+    fs.writeFile(absolutePath, content, 'utf8', (err) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      console.log('SUCCESS');
+    });
+  });
+
+
+  ipcMain.on('write-file', (event, filePath, content) => {
+    const absolutePath = path.join(__dirname, filePath);
+    fs.writeFile(absolutePath, content, 'utf8', (err) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      console.log('SUCCESS');
+    });
+  });
+
+  ipcMain.on('read-file', (event, filePath) => {
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      // console.log('SUCCESS:', jsonData);
+      event.reply('read-file-reply', { success: true, data: jsonData });
+    });
+  });
+
+  ipcMain.on('get_SceneData', (event, scene_start) => {
+    let sceneData = scene_start;
+    // console.log("sceneData",sceneData);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonDataArray = Object.values(jsonData);
+      // console.log("jsonDataArray",jsonDataArray);
+      let returnData = {};
+      for (let i = 0; i < jsonDataArray.length; i++) {
+        if (jsonDataArray[i]["scene-start-time"] == sceneData) {
+          returnData["AD-start-time"] =  jsonDataArray[i]["AD-start-time"];
+          returnData["scene-end-time"] =  jsonDataArray[i]["scene-end-time"];
+          returnData["scene-start-time"] =  jsonDataArray[i]["scene-start-time"];
+          returnData["AD-content"] =  jsonDataArray[i]["AD-content"][0];
+          // console.log('SUCCESS:', returnData);
+        }
+      }
+      // console.log('SUCCESS:', returnData);
+      event.reply('get_SceneData-reply', { success: true, data: returnData });
+    });
+  });
 })
 
-function call_pySceneDetect() {
-  const output_csv = path.join(__dirname, '../../csv/code.csv');
-  const output_image = path.join(__dirname, '../../image');
 
-  const output_csv_dir = path.dirname(output_csv);
-  if (!fs.existsSync(output_csv_dir)) {
-    fs.mkdirSync(output_csv_dir, { recursive: true });
+function call_pySceneDetect(event) {
+  console.log(mainEXE)
+  const output_json = path.join(PROJECT_PATH, 'json/main.json');
+  // const output_image = path.join(USER_DATA_PATH, 'image');
+
+  const output_json_dir = path.dirname(output_json);
+  if (!fs.existsSync(output_json_dir)) {
+    fs.mkdirSync(output_json_dir, { recursive: true });
   }
-  fs.writeFileSync(output_csv, '');
-  if (!fs.existsSync(output_image)) {
-    fs.mkdirSync(output_image, { recursive: true });
-  }
+  fs.writeFileSync(output_json, '');
+  // if (!fs.existsSync(output_image)) {
+  //   fs.mkdirSync(output_image, { recursive: true });
+  // }
 
-  const exePath = path.join(__dirname, '../../resources/main.exe');
-  const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
+  const psdEXEPath = mainEXE;
 
-  const cmd = `"${exePath}" "${inputVideo}" "${output_csv}" "${output_image}"`;
+  const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4');
 
+  // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
+
+  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
+  event.reply('meow', cmd);
+  console.log("123", USER_DATA_PATH);
+  console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error}`);
       return;
     }
-    console.log(`output: ${stdout}`);
+    // console.log(stdout);
+    if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
+      console.log('exe Done');
+      event.reply('start_PySceneDetect', "Success")
+    } else {
+      console.log('exe error');
+      event.reply('start_PySceneDetect', "Fail")
+    }
   });
 }
 
@@ -199,6 +283,16 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
+/**
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+ * @param options: { title:  String, defaultPath: String, buttonLabel: String, filters: area}
+
+ * @param content: String
+
+ * @returns Promise
+
+ */
+
+
+
+
