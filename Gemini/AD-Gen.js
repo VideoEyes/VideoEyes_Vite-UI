@@ -30,15 +30,16 @@ async function sendMultiModalPromptWithVideo(
                         },
                     },
                     {
-                        text: '你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可',
+                        text: 'Describe this video.'
+                        //'你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可。將不確定的是誤用A、B、C...表示',
                     },
                 ],
             },
         ],
         generationConfig: {
-            temperature: 0.1,
-            // topP: number,
-            // topK: number,
+            temperature: 0.2,
+            topP: 0.4,
+            // topK: 2,
             // candidateCount: integer,
             // maxOutputTokens: integer,
             // stopSequences: [
