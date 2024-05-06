@@ -50,7 +50,7 @@ def save_scenes_to_json(scene_list, output_file):
         inner_dict['AD-start-time'] = scene[0].get_timecode()
         inner_dict['AD-content'] = ["", "", "", ""]
         inner_dict['AD-content-ID'] = 0
-        outer_dict["AD"+i] = inner_dict
+        outer_dict["AD"+str(i)] = inner_dict
     with open(output_file, "w") as json_file:
         dump(outer_dict, json_file, indent=4)
 
