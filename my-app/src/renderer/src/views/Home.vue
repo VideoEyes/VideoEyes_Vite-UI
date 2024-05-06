@@ -25,11 +25,13 @@
 import { ref } from 'vue';
 import Versions from '../components/Versions.vue';
 import router from '../router';
+import Swal from 'sweetalert2';
 
 const overlayVisible = ref(false);
 
 const handleFileChange = (e: MouseEvent) => {
   // 啟動覆蓋層
+
   overlayVisible.value = true;
   window.electron.ipcRenderer.send('file');
 };

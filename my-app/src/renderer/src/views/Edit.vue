@@ -10,13 +10,18 @@ import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
 import router from '../router';
-
+import Swal from 'sweetalert2';
 
 
 let sceneStart_with_index = ref([] as any);
 let sceneStart: any = ref({});
 let KEY_main_json = ref([] as any);
 onMounted(() => {
+  window.onbeforeunload = (event) => {
+    // event.preventDefault();
+    console.log("I want to close the window");
+    window.electron.ipcRenderer.send('window-close', JSON.stringify(all_information));
+  }
   const video = document.getElementById('video') as HTMLSourceElement;
 
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
@@ -27,6 +32,8 @@ onMounted(() => {
   };
   initialalize();
 })
+
+let all_information = ref({} as any);
 function initialalize() {
   sceneStart_with_index = ref([]);
   sceneStart = ref({});
@@ -35,6 +42,9 @@ function initialalize() {
   window.electron.ipcRenderer.on('read-file-reply', (event, arg) => {
     if (arg.success) {
       console.log("arg", arg.data);
+      all_information = arg.data;
+      // 寫檔案暫存到json  
+
       for (let key in arg.data) {
         KEY_main_json.value.push(key);
         // console.log("scene", key);
@@ -66,26 +76,58 @@ function initialalize() {
 
 const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
 //=======================
-let isVisible = ref(false);
-let message = ref('');
-let title = ref('允許新增口述影像');
+
 let AD_ALL_time = ref({} as any);
 let textareaValue = ref('');
+
+const Toast_add = Swal.mixin({
+  toast: true,
+  position: "bottom-start",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  }
+});
+
+const Toast_delete = Swal.mixin({
+  toast: true,
+  position: "bottom-start",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  }
+});
+
 function new_AD() {
   // console.log('write-file');
-  this.message = "可以在右上方參數設定填寫口述影像時間，並在下方新增口述影像內容。";
-  this.isVisible = true;
+  Toast_add.fire({
+    icon: "success",
+    title: "可以新增口述影像瞜！",
+    text: "請點選右上角的時間參數，選擇要新增的時間點",
+  });
   timeSettings.value[0].value = "";
   timeSettings.value[1].value = "";
   timeSettings.value[2].value = "";
-  setTimeout(() => {
-    this.isVisible = false;
-  }, 5000);
 }
 
+let delete_flag = ref(false);
+function delete_AD_hint() {
+  Toast_delete.fire({
+    icon: "info",
+    title: "可以刪除口述影像瞜！",
+    text: "請點選下方時間點，選擇要刪除的時間點",
+  });
+  delete_flag.value = true;
+  console.log("all_information", all_information);
+}
 
 function Store_AD() {
-  
   if (!KEY_main_json.value.length) {
     console.error("KEY_main_json is empty.");
     return;
@@ -108,19 +150,20 @@ function Store_AD() {
 
   console.log("data to be sent", data);
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
-  
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
-    
+
     if (arg.success) {
       initialalize();
       window.location.reload();
     } else {
       console.error('Error writing file:', arg.error);
     }
-    
+
   });
   window.location.reload();
 }
+
+
 
 //=======================
 
@@ -193,10 +236,43 @@ function get_ad_information(index, ttvalue) {
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
-      // console.log("get_SceneData", arg.data);
+      if (delete_flag.value) {
+        delete_flag.value = false;
+        Swal.fire({
+          title: "你確定要刪除這段口述影像嗎",
+          html: `
+          場景開始時間: ${arg.data["scene-start-time"]}<br>
+          場景結束時間: ${arg.data["scene-end-time"]}<br>
+          口述開始時間: ${arg.data["AD-start-time"]}<br>
+          口述影像內容: ${arg.data["AD-content"]}<br>
+          `,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "對拉!! 媽的快點刪除"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              title: "刪除成功瞜!",
+              text: "這段口述影像已被刪除",
+              icon: "success"
+            });
+            for (let key in all_information) {
+              if (all_information[key]["scene-start-time"] == arg.data["scene-start-time"]) {
+                delete all_information[key];
+                break;
+              }
+            }
+            console.log("all_information_all", all_information);
+          }
+        });
+        return;
+      }
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
+      console.log("arg.data", arg.data);
     } else {
       console.error('Error reading file:', arg.error);
     }
@@ -250,7 +326,7 @@ function getShowTimeBar(ttvalue) {
         <div class="left_title">
           <div class="edit-button">
             <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
-            <el-button type="danger">刪除</el-button>
+            <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
 
           </div>
         </div>
@@ -293,18 +369,11 @@ function getShowTimeBar(ttvalue) {
           </div>
           <div class="ad_tool">
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
+            <div class="ad_tool_add" @click="delete_AD">要刪除</div>
             <button class="btn" id="btn_add">
               <span>新增</span>
             </button>
-            <button class="btn">
-              <span>刪除</span>
-            </button>
-            <button class="btn">
-              <span>儲存</span>
-            </button>
-            <button class="btn">
-              <span>取消</span>
-            </button>
+
           </div>
         </div>
       </div>
@@ -326,17 +395,6 @@ function getShowTimeBar(ttvalue) {
 
     <div class="down" id="ALL">
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
-
-      <div v-if="isVisible" class="notification">
-        <div class="notification-icon">
-          <img :src="iconUrl" alt="icon" />
-          <h4 class="notification-title">{{ title }}</h4>
-        </div>
-        <div class="notification-content">
-
-          <p class="notification-message">{{ message }}</p>
-        </div>
-      </div>
 
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"

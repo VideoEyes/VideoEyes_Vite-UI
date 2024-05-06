@@ -14,7 +14,10 @@ const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
+import Swal from 'sweetalert2';
 
+
+// 主進程
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -29,7 +32,6 @@ function createWindow() {
       webSecurity: false
     }
   })
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -46,6 +48,21 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), { hash: 'home' }) //here
   }
+
+  // 視窗關閉事件處理
+  ipcMain.on('window-close', (event, data) => {
+    console.log("window-close", data);  // 這裡的 data 就是你傳送的資料
+    let AA = JSON.parse(data);
+    let jsonStr = JSON.stringify(AA, null, 4);
+    fs.writeFile(output_json, jsonStr, "utf8", (err2) => {
+      if (err2) {
+        console.error("ERROR:", err2);
+        return;
+      }
+      console.log('File successfully written!');
+    });
+    mainWindow.close()
+  });
 }
 
 async function call_vertexAI(projectId = 'duet-ai-rain-py',
@@ -109,6 +126,9 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  //////////////
+
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
@@ -197,9 +217,9 @@ app.whenReady().then(() => {
       }
       jsonData = { ...jsonData, ...contentObject }
       console.log("jsonData", jsonData);
-      
 
-/////////sort json by time
+
+      /////////sort json by time
       const jsonArray = Object.entries(jsonData); // Convert json to array
       jsonArray.sort((a, b) => { //定義排序方式
         const timeA = a[1]['scene-start-time'];
@@ -208,13 +228,13 @@ app.whenReady().then(() => {
         const [hourB, minB, secB, milliB] = timeB.split(/[:.]/);
         return (hourA - hourB) * 3600000 + (minA - minB) * 60000 + (secA - secB) * 1000 + (milliA - milliB);
       });
-/////
+      /////
       const sortedJson = {}; // Convert array to json
       jsonArray.forEach(([key, value]) => {
         sortedJson[key] = value;
       });
       const updatedJsonData = JSON.stringify(sortedJson, null, 4);
-//////
+      //////
 
       fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
         if (err2) {
@@ -239,6 +259,7 @@ app.whenReady().then(() => {
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
+
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start;
@@ -313,6 +334,8 @@ function call_pySceneDetect(event) {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+
+
     app.quit()
   }
 })
