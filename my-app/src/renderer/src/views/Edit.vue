@@ -269,7 +269,7 @@ function get_ad_information(index, ttvalue) {
   check_AD_choice(); //檢查現在選擇的AD，改變顏色用
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
-  window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
+  window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
