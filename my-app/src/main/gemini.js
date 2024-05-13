@@ -1,34 +1,14 @@
-import constants from './constants';
-
 const { VertexAI } = require('@google-cloud/vertexai');
 const { Storage } = require('@google-cloud/storage');
 
-async function uploadFile(destFileName, filePath, bucketName = 'gemini-ad-gen') {
-    const storage = new Storage();
-    const options = {
-        destination: destFileName,
-    };
 
-    await storage.bucket(bucketName).upload(filePath, options);
-    console.log(`${filePath} uploaded to ${bucketName}`);
-    return `gs://${bucketName}/${destFileName}`;
-}
+const vertexAI = new VertexAI({ project: 'gemini-rain-py', location: 'us-central1' });
+const storage = new Storage();
+const bucketName = 'gemini-ad-gen';
 
-async function sendMultiModalPromptWithVideo(
-    projectId = '	gemini-rain-py',
-    location = 'us-central1',
-    model = 'gemini-1.0-pro-vision',
-    uri = 'gs://gemini-ad-gen/pixel8.mp4'
-) {
-    // Initialize Vertex with your Cloud project and location
-    const vertexAI = new VertexAI({ project: projectId, location: location });
+async function sendMultiModalPromptWithVideo(projectId, location, model, uri) {
+    const generativeVisionModel = vertexAI.getGenerativeModel({ model });
 
-    const generativeVisionModel = vertexAI.getGenerativeModel({
-        model: model,
-        
-    });
-
-    // Pass multimodal prompt
     const request = {
         contents: [
             {
@@ -42,7 +22,6 @@ async function sendMultiModalPromptWithVideo(
                     },
                     {
                         text: 'Describe this video.'
-                        //'你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可。將不確定的是誤用A、B、C...表示',
                     },
                 ],
             },
@@ -50,45 +29,23 @@ async function sendMultiModalPromptWithVideo(
         generationConfig: {
             temperature: 0.2,
             topP: 0.4,
-            // topK: 2,
-            // candidateCount: integer,
-            // maxOutputTokens: integer,
-            // stopSequences: [
-            //   string
-            // ]
           }
     };
 
-    // Create the response
     const response = await generativeVisionModel.generateContent(request);
-    // Wait for the response to complete
     const aggregatedResponse = await response.response;
-    // Select the text from the response
-    const fullTextResponse =
-        aggregatedResponse.candidates[0].content.parts[0].text;
+    const fullTextResponse = aggregatedResponse.candidates[0].content.parts[0].text;
 
-    console.log(fullTextResponse);
     return fullTextResponse;
 }
 
-async function gemini_process_all(AD_json, bucketName = 'gemini-ad-gen') {
-    //read json file
-    const fs = require('fs');
-    const path = require('path');
-    //path: AD_json
-    fs.readFile(AD_json, 'utf8', async (err, data) => {
-        if (err) {
-            console.error('ERROR:', err);
-            return;
-        }
-        const jsonData = JSON.parse(data);
-        const jsonIndex = Object.keys(jsonData);
-        for(const key of jsonIndex){
-            const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
-            const uri = await uploadFile(filePath, filePath, bucketName);
-            const response = await sendMultiModalPromptWithVideo(uri);
-            jsonData[key]["AD-content"] = response;
-        }
-        fs.writeFileSync(AD_json, JSON.stringify(jsonData));
-    });
+async function uploadFile(destFileName, filePath) {
+    const options = { destination: destFileName };
+    await storage.bucket(bucketName).upload(filePath, options);
+    return `gs://${bucketName}/${destFileName}`;
 }
+
+module.exports = {
+    sendMultiModalPromptWithVideo,
+    uploadFile
+};
