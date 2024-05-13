@@ -125,6 +125,23 @@ function delete_AD_hint() {
   // console.log("all_information", all_information);
 }
 
+let NOW_select_AD_name = ref("");
+function SSS_AAA_DDD(){
+  console.log("NOW_select_AD_nameAAA", NOW_select_AD_name);
+  if (NOW_select_AD_name.value == "") {
+    Swal.fire({
+      icon: "error",
+      title: "請選擇要存檔的口述影像",
+    });
+  }
+  let data = [NOW_select_AD_name["_value"].value, textareaValue];
+  console.log("data to be sent", data);
+  return;
+  window.electron.ipcRenderer.send('SSS_AAA_DDD', data);
+  window.location.reload();
+}
+
+
 function Store_AD() {
   nowSelectedAD = null;
   if (!KEY_main_json.value.length) {
@@ -160,7 +177,6 @@ function Store_AD() {
   // console.log("data to be sent", data);
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
-
     if (arg.success) {
       initialalize();
       window.location.reload();
@@ -273,12 +289,13 @@ function get_ad_information(index, ttvalue) {
   index = index + temp;
   nowSelectedAD = index; //現在選擇的AD
   check_AD_choice(); //檢查現在選擇的AD，改變顏色用
+  // 要給存AD的 AD name
+  NOW_select_AD_name.value = "AD" + index;
+  console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
-  window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
-    console.log("QQQQQQ", arg.data);
+  window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
-      console.log("QQQQQQ", arg.data);
       if (delete_flag.value) {
         delete_flag.value = false;
         Swal.fire({
@@ -298,8 +315,11 @@ function get_ad_information(index, ttvalue) {
         }).then((result) => {
           if (result.isConfirmed) {
             for (let key in all_information) {
+              console.log("delete_write_file", key);
               if (all_information[key]["scene-start-time"] == arg.data["scene-start-time"]) {
+                console.log("delete_write_file", key);
                 window.electron.ipcRenderer.send('delete_write_file', key);
+                window.location.reload();
                 break;
               }
             }
@@ -411,10 +431,7 @@ function getShowTimeBar(ttvalue) {
           <div class="ad_tool">
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
             <div class="ad_tool_add">要刪除</div>
-            <button class="btn" id="btn_add">
-              <span>新增</span>
-            </button>
-
+            <div class="ad_tool_add" @click="SSS_AAA_DDD">存檔口述影像</div>
           </div>
         </div>
       </div>

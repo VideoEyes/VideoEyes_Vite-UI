@@ -311,7 +311,7 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcMain.once('delete_write_file', (event, content) => {
+  ipcMain.on('delete_write_file', (event, content) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
@@ -328,6 +328,26 @@ app.whenReady().then(() => {
         console.log('File successfully written!');
       });
     });
+  });
+  ipcMain.once('SSS_AAA_DDD', (event, content) => {
+    console.log('SSS_AAA_DDD:', content);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonDataArray = Object.values(jsonData);
+      let returnData = {};
+      for (let key in jsonDataArray) {
+        if (key == content[0]) {
+          jsonDataArray[i]["AD-content"]["AD-content-ID"] = content[1];
+        }
+      }
+      console.log('QQ:', jsonDataArray);
+
+    });
+
   });
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
@@ -348,11 +368,11 @@ app.whenReady().then(() => {
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
           returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
-          console.log('SUCCESS:', returnData);
+          // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
       }
-     
+
     });
   });
 })
