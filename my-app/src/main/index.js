@@ -255,12 +255,12 @@ app.whenReady().then(() => {
         return;
       }
       const jsonData = JSON.parse(data);
-      console.log('SUCCESS:', jsonData);
+      // console.log('SUCCESS:', jsonData);
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
   //檢查AD選擇
-  ipcMain.on('check-AD-choice', (event,now_Selected_AD) => {
+  ipcMain.on('check-AD-choice', (event, now_Selected_AD) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
     // console.log("ad_index",typeof ad_index);
     fs.readFile(output_json, 'utf8', (err, data) => {
@@ -272,13 +272,13 @@ app.whenReady().then(() => {
       const jsonArray = Object.entries(jsonData);
       // // console.log("jsonArray", jsonArray);
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
-      console.log("now_Selected_AD",jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
       event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
     });
   });
 
   //修改AD選擇
-  ipcMain.on('change-AD-choice', (event,now_Selected_AD, ad_index) => {
+  ipcMain.on('change-AD-choice', (event, now_Selected_AD, ad_index) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
     // console.log("ad_index",typeof ad_index);
     fs.readFile(output_json, 'utf8', (err, data) => {
@@ -289,7 +289,7 @@ app.whenReady().then(() => {
       const jsonData = JSON.parse(data);
       const jsonArray = Object.entries(jsonData);
       // // console.log("jsonArray", jsonArray);
-      jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index-1;
+      jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index - 1;
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
 
       /////
@@ -311,9 +311,28 @@ app.whenReady().then(() => {
     });
   });
 
+  ipcMain.once('delete_write_file', (event, content) => {
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      delete jsonData[content];
+      const jsonArray = Object.entries(jsonData);
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => {
+        if (err2) {
+          console.error('ERROR:', err2);
+          return;
+        }
+        console.log('File successfully written!');
+      });
+    });
+  });
+
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start;
-    
+
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
@@ -321,7 +340,7 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-      // console.log("jsonDataArray", jsonDataArray);
+
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
@@ -329,11 +348,11 @@ app.whenReady().then(() => {
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
           returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
-          // console.log('SUCCESS:', returnData);
+          console.log('SUCCESS:', returnData);
+          event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
       }
-      // console.log('SUCCESS:', returnData);
-      event.reply('get_SceneData-reply', { success: true, data: returnData });
+     
     });
   });
 })

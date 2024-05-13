@@ -175,7 +175,7 @@ function Store_AD() {
 function change_AD_choice(index) {
   console.log("change_AD", index);
   if (nowSelectedAD != null) {
-    window.electron.ipcRenderer.send('change-AD-choice',nowSelectedAD, index);
+    window.electron.ipcRenderer.send('change-AD-choice', nowSelectedAD, index);
   }
 }
 
@@ -240,17 +240,17 @@ function handleMouseMove(event) {
 
 }
 
-function check_AD_Choice22222() {
-  console.log("check_AD_Choice");
-  for (let i = 0; i < windows.value.length; i++) {
-    windows.value[i].color = 'rgb(255,255,255)'
-  }
-  windows.value[0].color = 'rgb(0,0,0)'
-}
+// function check_AD_Choice22222() {
+//   console.log("check_AD_Choice");
+//   for (let i = 0; i < windows.value.length; i++) {
+//     windows.value[i].color = 'rgb(255,255,255)'
+//   }
+//   windows.value[0].color = 'rgb(0,0,0)'
+// }
 
 function check_AD_choice() {
   if (nowSelectedAD != null) {
-    window.electron.ipcRenderer.send('check-AD-choice',nowSelectedAD);
+    window.electron.ipcRenderer.send('check-AD-choice', nowSelectedAD);
     window.electron.ipcRenderer.once('now_Selected_AD-reply', (event, arg) => {
       console.log(arg); // 輸出來自主進程的回覆
       for (let i = 0; i < windows.value.length; i++) {
@@ -263,7 +263,6 @@ function check_AD_choice() {
 
 
 function get_ad_information(index, ttvalue) {
-
   var temp = 0;
   for (var i = 0; i < sceneStart_with_index.value.length; i++) {
     if (parseInt(sceneStart_with_index.value[i].substring(3, 5), 10) == ttvalue - 1) {
@@ -277,7 +276,9 @@ function get_ad_information(index, ttvalue) {
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
+    console.log("QQQQQQ", arg.data);
     if (arg.success) {
+      console.log("QQQQQQ", arg.data);
       if (delete_flag.value) {
         delete_flag.value = false;
         Swal.fire({
@@ -298,18 +299,13 @@ function get_ad_information(index, ttvalue) {
           if (result.isConfirmed) {
             for (let key in all_information) {
               if (all_information[key]["scene-start-time"] == arg.data["scene-start-time"]) {
-                delete all_information[key];
+                window.electron.ipcRenderer.send('delete_write_file', key);
                 break;
               }
             }
-            let temp_json = JSON.parse(all_information.value);
-            console.log("temp_json", JSON.stringify(temp_json, null, 4));
-            window.electron.ipcRenderer.send('write-file', JSON.stringify(temp_json, null, 4));
-            initialalize();
-          } else if(result.isDenied){
+          } else if (result.isDenied) {
             window.location.reload();
           }
-          
         });
         initialalize();
         // window.location.reload();
@@ -318,7 +314,7 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
-      // console.log("arg.data", arg.data);
+
     } else {
       console.error('Error reading file:', arg.error);
     }
