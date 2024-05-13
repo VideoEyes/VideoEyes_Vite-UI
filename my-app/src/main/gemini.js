@@ -6,46 +6,55 @@ const vertexAI = new VertexAI({ project: 'gemini-rain-py', location: 'us-central
 const storage = new Storage();
 const bucketName = 'gemini-ad-gen';
 
-async function sendMultiModalPromptWithVideo(projectId, location, model, uri) {
-    const generativeVisionModel = vertexAI.getGenerativeModel({ model });
+export async function gemini_sendMultiModalPromptWithVideo(projectId, location, model, uri) {
+    try {
+        const generativeVisionModel = await vertexAI.getGenerativeModel({
+            model: model,
+        });
 
-    const request = {
-        contents: [
-            {
-                role: 'user',
-                parts: [
-                    {
-                        fileData: {
-                            fileUri: uri,
-                            mimeType: 'video/mp4',
+        const request = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [
+                        {
+                            fileData: {
+                                fileUri: uri,
+                                mimeType: 'video/mp4',
+                            },
                         },
-                    },
-                    {
-                        text: 'Describe this video.'
-                    },
-                ],
+                        {
+                            text: '描述這部影片'
+                        },
+                    ],
+                },
+            ],
+            generationConfig: {
+                temperature: 0.2,
+                topP: 0.4,
+                maxOutputTokens: 150,
             },
-        ],
-        generationConfig: {
-            temperature: 0.2,
-            topP: 0.4,
-          }
-    };
+            
+        };
 
-    const response = await generativeVisionModel.generateContent(request);
-    const aggregatedResponse = await response.response;
-    const fullTextResponse = aggregatedResponse.candidates[0].content.parts[0].text;
+        const response = await generativeVisionModel.generateContent(request);
+        const aggregatedResponse = await response.response;
+        const fullTextResponse = aggregatedResponse.candidates[0].content.parts[0].text;
 
-    return fullTextResponse;
+        return fullTextResponse;
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-async function uploadFile(destFileName, filePath) {
+
+export async function gemini_uploadFile(destFileName, filePath) {
     const options = { destination: destFileName };
     await storage.bucket(bucketName).upload(filePath, options);
     return `gs://${bucketName}/${destFileName}`;
 }
 
 module.exports = {
-    sendMultiModalPromptWithVideo,
-    uploadFile
+    gemini_sendMultiModalPromptWithVideo,
+    gemini_uploadFile
 };

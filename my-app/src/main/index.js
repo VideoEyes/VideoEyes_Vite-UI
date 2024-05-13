@@ -6,6 +6,7 @@ import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
+import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
 
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -187,12 +188,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    re = await gemini_process_all(output_json);
-    // if (re == "SUCCESS") {
-    //   event.reply('gemini_end', "Success")
-    // } else {
-    //   event.reply('gemini_end', "Fail")
-    // }
+    gemini_process_all(output_json,event);
   });
 })
 
@@ -261,68 +257,7 @@ app.on('window-all-closed', () => {
 
 
 
-
-
-
-
-const { Storage } = require('@google-cloud/storage');
-
-async function uploadFile(destFileName, filePath, bucketName = 'gemini-ad-gen') {
-  const storage = new Storage();
-  const options = {
-    destination: destFileName,
-  };
-
-  storage.bucket(bucketName).upload(filePath, options);
-  console.log(`${filePath} uploaded to ${bucketName}`);
-  return `gs://${bucketName}/${destFileName}`;
-}
-
-
-async function sendMultiModalPromptWithVideo(
-  projectId = '	gemini-rain-py',
-  location = 'us-central1',
-  model = 'gemini-1.0-pro-vision',
-  uri = 'gs://gemini-ad-gen/pixel8.mp4'
-) {
-  // Initialize Vertex with your Cloud project and location
-  const vertexAI = new VertexAI({ project: projectId, location: location });
-
-  const generativeVisionModel = vertexAI.getGenerativeModel({
-    model: model,
-
-  });
-
-  const request = {
-    contents: [
-      {
-        role: 'user',
-        parts: [
-          {
-            fileData: {
-              fileUri: 'gs://cloud-samples-data/video/animals.mp4',
-              mimeType: 'video/mp4',
-            },
-          },
-          {
-            text: 'What is in the video?',
-          },
-        ],
-      },
-    ],
-  };
-
-  // Create the response
-  const response = await generativeVisionModel.generateContent(request);
-  // Wait for the response to complete
-  const aggregatedResponse = await response.response;
-  // Select the text from the response
-  const fullTextResponse =
-    aggregatedResponse.candidates[0].content.parts[0].text;
-  return fullTextResponse;
-}
-
-async function gemini_process_all(AD_json, bucketName = 'gemini-ad-gen') {
+async function gemini_process_all(AD_json,event) {
   //read json file
   const fs = require('fs');
   const path = require('path');
@@ -336,19 +271,18 @@ async function gemini_process_all(AD_json, bucketName = 'gemini-ad-gen') {
     const jsonIndex = Object.keys(jsonData);
     for (const key of jsonIndex) {
       const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
-      const uri = await uploadFile(filePath, filePath, bucketName);
-      const response = await sendMultiModalPromptWithVideo(uri);
+      const uri = await gemini_uploadFile(key + '.mp4', filePath);
+      const response = await gemini_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.0-pro-vision', uri);
       jsonData[key]["AD-content"] = response;
       console.log('key:', key, 'response:', response);
+      // 暫停1秒
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
-    try {
-      fs.writeFile(AD_json, JSON.stringify(jsonData));
-      console.log('SUCCESS write AD-content');
-      //fs.writeFileSync(AD_json, JSON.stringify(jsonData));
-      return "SUCCESS"
-    } catch (err) {
-      console.log('ERROR:', err);
-      return err;
-    }
+    console.log('jsonData:', jsonData);
+    fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
+      if (err) return "FAIL";
+      console.log('The file has been saved!');
+      event.reply('gemini_end', "Success")
+    });
   });
 }
