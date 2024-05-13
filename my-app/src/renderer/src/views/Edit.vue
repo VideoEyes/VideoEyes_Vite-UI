@@ -11,6 +11,8 @@ import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
 import router from '../router';
 import Swal from 'sweetalert2';
+
+var nowSelectedAD = null; //現在選擇的AD，全域變數(待修改)
 import { watch } from 'vue';
 
 let sceneStart_with_index = ref([] as any);
@@ -45,7 +47,7 @@ function initialalize() {
   window.electron.ipcRenderer.send('read-file', 'NONE');
   window.electron.ipcRenderer.on('read-file-reply', (event, arg) => {
     if (arg.success) {
-      console.log("arg", arg.data);
+      // console.log("arg", arg.data);
       all_information = arg.data;
       // 寫檔案暫存到json  
       for (let key in arg.data) {
@@ -120,10 +122,11 @@ function delete_AD_hint() {
     text: "請點選下方時間點，選擇要刪除的時間點",
   });
   delete_flag.value = true;
-  console.log("all_information", all_information);
+  // console.log("all_information", all_information);
 }
 
 function Store_AD() {
+  nowSelectedAD = null;
   if (!KEY_main_json.value.length) {
     console.error("KEY_main_json is empty.");
     return;
@@ -154,7 +157,7 @@ function Store_AD() {
     }
   };
 
-  console.log("data to be sent", data);
+  // console.log("data to be sent", data);
   window.electron.ipcRenderer.send('write-file', JSON.stringify(data));
   window.electron.ipcRenderer.on('write-file-reply', (event, arg) => {
 
@@ -169,6 +172,12 @@ function Store_AD() {
   window.location.reload();
 }
 
+function change_AD_choice(index) {
+  console.log("change_AD", index);
+  if (nowSelectedAD != null) {
+    window.electron.ipcRenderer.send('change-AD-choice',nowSelectedAD, index);
+  }
+}
 
 
 //=======================
@@ -200,6 +209,8 @@ const state = reactive({
 const { tools, windows, timeSettings } = toRefs(state)
 // const IMAGE = require.context('../picture/scene', false, /\.png$/)
 const toggleWindow = (window) => {
+  change_AD_choice(window.number);
+  // console.log('toggleWindow', window.number);
   for (let i = 0; i < windows.value.length; i++) {
     windows.value[i].color = 'rgb(255,255,255)'
   }
@@ -229,7 +240,30 @@ function handleMouseMove(event) {
 
 }
 
+function check_AD_Choice22222() {
+  console.log("check_AD_Choice");
+  for (let i = 0; i < windows.value.length; i++) {
+    windows.value[i].color = 'rgb(255,255,255)'
+  }
+  windows.value[0].color = 'rgb(0,0,0)'
+}
+
+function check_AD_choice() {
+  if (nowSelectedAD != null) {
+    window.electron.ipcRenderer.send('check-AD-choice',nowSelectedAD);
+    window.electron.ipcRenderer.once('now_Selected_AD-reply', (event, arg) => {
+      console.log(arg); // 輸出來自主進程的回覆
+      for (let i = 0; i < windows.value.length; i++) {
+        windows.value[i].color = 'rgb(255,255,255)'
+      }
+      windows.value[arg].color = 'rgb(0,0,0)'
+    });
+  }
+}
+
+
 function get_ad_information(index, ttvalue) {
+
   var temp = 0;
   for (var i = 0; i < sceneStart_with_index.value.length; i++) {
     if (parseInt(sceneStart_with_index.value[i].substring(3, 5), 10) == ttvalue - 1) {
@@ -238,9 +272,11 @@ function get_ad_information(index, ttvalue) {
     }
   }
   index = index + temp;
+  nowSelectedAD = index; //現在選擇的AD
+  check_AD_choice(); //檢查現在選擇的AD，改變顏色用
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
-  window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
+  window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
@@ -282,7 +318,7 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
-      console.log("arg.data", arg.data);
+      // console.log("arg.data", arg.data);
     } else {
       console.error('Error reading file:', arg.error);
     }
@@ -310,7 +346,7 @@ function calculatePosition(time, ttvalue) {
   let result = (INT_MIN * 100) + Number(roundTo(position, 2).toFixed(2));
 
   show_time_bar.value.push(Number(result.toFixed(2)));
-  console.log("show_time_bar", show_time_bar.value);
+  // console.log("show_time_bar", show_time_bar.value);
 }
 
 function getShowTimeBar(ttvalue) {

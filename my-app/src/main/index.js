@@ -51,16 +51,16 @@ function createWindow() {
 
   // 視窗關閉事件處理
   ipcMain.on('window-close', (event, data) => {
-    console.log("window-close", data);  // 這裡的 data 就是你傳送的資料
-    let AA = JSON.parse(data);
-    let jsonStr = JSON.stringify(AA, null, 4);
-    fs.writeFile(output_json, jsonStr, "utf8", (err2) => {
-      if (err2) {
-        console.error("ERROR:", err2);
-        return;
-      }
-      console.log('File successfully written!');
-    });
+    // console.log("window-close", data);  // 這裡的 data 就是你傳送的資料
+    // let AA = JSON.parse(data);
+    // let jsonStr = JSON.stringify(AA, null, 4);
+    // fs.writeFile(output_json, jsonStr, "utf8", (err2) => {
+    //   if (err2) {
+    //     console.error("ERROR:", err2);
+    //     return;
+    //   }
+    //   console.log('File successfully written!');
+    // });
     mainWindow.close()
   });
 }
@@ -259,11 +259,61 @@ app.whenReady().then(() => {
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
+  //檢查AD選擇
+  ipcMain.on('check-AD-choice', (event,now_Selected_AD) => {
+    // console.log("now_Selected_AD",typeof now_Selected_AD);
+    // console.log("ad_index",typeof ad_index);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonArray = Object.entries(jsonData);
+      // // console.log("jsonArray", jsonArray);
+      // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
+      console.log("now_Selected_AD",jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+    });
+  });
 
+  //修改AD選擇
+  ipcMain.on('change-AD-choice', (event,now_Selected_AD, ad_index) => {
+    // console.log("now_Selected_AD",typeof now_Selected_AD);
+    // console.log("ad_index",typeof ad_index);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonArray = Object.entries(jsonData);
+      // // console.log("jsonArray", jsonArray);
+      jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index-1;
+      // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
+
+      /////
+      const sortedJson = {}; // Convert array to json
+      jsonArray.forEach(([key, value]) => {
+        sortedJson[key] = value;
+      });
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+      //////
+
+      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+        if (err2) {
+          console.error("ERROR:", err2);
+          return;
+        }
+        // console.log('File successfully written!');
+      });
+
+    });
+  });
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start;
-    // console.log("sceneData",sceneData);
+    
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
