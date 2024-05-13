@@ -199,11 +199,11 @@ app.whenReady().then(() => {
         console.error("Error reading file:", err);
         return;
       }
-
       let jsonData;
       try {
         jsonData = JSON.parse(data);
-        console.log("jsonData", content);
+        console.log("content", content);
+        console.log("jsonData", jsonData);
       } catch (parseError) {
         console.error("Error parsing JSON data:", parseError);
         return;
@@ -216,9 +216,9 @@ app.whenReady().then(() => {
         console.error('Parsing error:', error);
       }
       jsonData = { ...jsonData, ...contentObject }
-      console.log("jsonData", jsonData);
+      // console.log("jsonData", jsonData);
 
-
+      // console.log("jsonData", jsonData);
       /////////sort json by time
       const jsonArray = Object.entries(jsonData); // Convert json to array
       jsonArray.sort((a, b) => { //定義排序方式
@@ -235,7 +235,7 @@ app.whenReady().then(() => {
       });
       const updatedJsonData = JSON.stringify(sortedJson, null, 4);
       //////
-
+      // console.log("updatedJsonData", updatedJsonData);
       fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
         if (err2) {
           console.error("ERROR:", err2);
@@ -255,7 +255,7 @@ app.whenReady().then(() => {
         return;
       }
       const jsonData = JSON.parse(data);
-      // console.log('SUCCESS:', jsonData);
+      console.log('SUCCESS:', jsonData);
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
