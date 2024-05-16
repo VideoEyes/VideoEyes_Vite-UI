@@ -288,6 +288,7 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonArray = Object.entries(jsonData);
+      event.reply('change-AD-choice-reply', jsonArray[now_Selected_AD][1]["AD-content"][ad_index - 1])
       // // console.log("jsonArray", jsonArray);
       jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index - 1;
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
@@ -367,7 +368,7 @@ app.whenReady().then(() => {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
+          returnData["AD-content"] = jsonDataArray[i]["AD-content"];
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
