@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
+
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
@@ -16,7 +17,10 @@ const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
+import Swal from 'sweetalert2';
 
+
+// 主進程
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -31,7 +35,6 @@ function createWindow() {
       webSecurity: false
     }
   })
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -48,6 +51,21 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), { hash: 'home' }) //here
   }
+
+  // 視窗關閉事件處理
+  ipcMain.on('window-close', (event, data) => {
+    // console.log("window-close", data);  // 這裡的 data 就是你傳送的資料
+    // let AA = JSON.parse(data);
+    // let jsonStr = JSON.stringify(AA, null, 4);
+    // fs.writeFile(output_json, jsonStr, "utf8", (err2) => {
+    //   if (err2) {
+    //     console.error("ERROR:", err2);
+    //     return;
+    //   }
+    //   console.log('File successfully written!');
+    // });
+    mainWindow.close()
+  });
 }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -62,6 +80,9 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  //////////////
+
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
@@ -126,28 +147,60 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
-  ipcMain.on('write-file', (event, filePath, content) => {
-    const absolutePath = path.join(__dirname, filePath);
-    fs.writeFile(absolutePath, content, 'utf8', (err) => {
+  ipcMain.on('write-file', (event, content) => {
+    fs.readFile(output_json, "utf8", (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
+        console.error("Error reading file:", err);
         return;
       }
-      console.log('SUCCESS');
-    });
-  });
-
-
-  ipcMain.on('write-file', (event, filePath, content) => {
-    const absolutePath = path.join(__dirname, filePath);
-    fs.writeFile(absolutePath, content, 'utf8', (err) => {
-      if (err) {
-        console.error('ERROR:', err);
+      let jsonData;
+      try {
+        jsonData = JSON.parse(data);
+        console.log("content", content);
+        console.log("jsonData", jsonData);
+      } catch (parseError) {
+        console.error("Error parsing JSON data:", parseError);
         return;
       }
-      console.log('SUCCESS');
+      let contentObject;
+
+      try {
+        contentObject = JSON.parse(content);
+      } catch (error) {
+        console.error('Parsing error:', error);
+      }
+      jsonData = { ...jsonData, ...contentObject }
+      // console.log("jsonData", jsonData);
+
+      // console.log("jsonData", jsonData);
+      /////////sort json by time
+      const jsonArray = Object.entries(jsonData); // Convert json to array
+      jsonArray.sort((a, b) => { //定義排序方式
+        const timeA = a[1]['scene-start-time'];
+        const timeB = b[1]['scene-start-time'];
+        const [hourA, minA, secA, milliA] = timeA.split(/[:.]/);
+        const [hourB, minB, secB, milliB] = timeB.split(/[:.]/);
+        return (hourA - hourB) * 3600000 + (minA - minB) * 60000 + (secA - secB) * 1000 + (milliA - milliB);
+      });
+      /////
+      const sortedJson = {}; // Convert array to json
+      jsonArray.forEach(([key, value]) => {
+        sortedJson[key] = value;
+      });
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+      //////
+      // console.log("updatedJsonData", updatedJsonData);
+      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+        if (err2) {
+          console.error("ERROR:", err2);
+          return;
+        }
+        console.log('File successfully written!');
+      });
     });
+
   });
+
 
   ipcMain.on('read-file', (event, filePath) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
@@ -160,10 +213,79 @@ app.whenReady().then(() => {
       event.reply('read-file-reply', { success: true, data: jsonData });
     });
   });
+  //檢查AD選擇
+  ipcMain.on('check-AD-choice', (event, now_Selected_AD) => {
+    // console.log("now_Selected_AD",typeof now_Selected_AD);
+    // console.log("ad_index",typeof ad_index);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonArray = Object.entries(jsonData);
+      // // console.log("jsonArray", jsonArray);
+      // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
+      console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+    });
+  });
 
-  ipcMain.on('get_SceneData', (event, scene_start) => {
-    let sceneData = scene_start;
-    // console.log("sceneData",sceneData);
+  //修改AD選擇
+  ipcMain.on('change-AD-choice', (event, now_Selected_AD, ad_index) => {
+    // console.log("now_Selected_AD",typeof now_Selected_AD);
+    // console.log("ad_index",typeof ad_index);
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonArray = Object.entries(jsonData);
+      event.reply('change-AD-choice-reply', jsonArray[now_Selected_AD][1]["AD-content"][ad_index - 1])
+      // // console.log("jsonArray", jsonArray);
+      jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index - 1;
+      // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
+
+      /////
+      const sortedJson = {}; // Convert array to json
+      jsonArray.forEach(([key, value]) => {
+        sortedJson[key] = value;
+      });
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+      //////
+
+      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+        if (err2) {
+          console.error("ERROR:", err2);
+          return;
+        }
+        // console.log('File successfully written!');
+      });
+
+    });
+  });
+
+  ipcMain.on('delete_write_file', (event, content) => {
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      delete jsonData[content];
+      const jsonArray = Object.entries(jsonData);
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => {
+        if (err2) {
+          console.error('ERROR:', err2);
+          return;
+        }
+        console.log('File successfully written!');
+      });
+    });
+  });
+  ipcMain.once('SSS_AAA_DDD', (event, content) => {
+    console.log('SSS_AAA_DDD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
@@ -171,7 +293,29 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-      // console.log("jsonDataArray",jsonDataArray);
+      let returnData = {};
+      for (let key in jsonDataArray) {
+        if (key == content[0]) {
+          jsonDataArray[i]["AD-content"]["AD-content-ID"] = content[1];
+        }
+      }
+      console.log('QQ:', jsonDataArray);
+
+    });
+
+  });
+
+  ipcMain.on('get_SceneData', (event, scene_start) => {
+    let sceneData = scene_start;
+
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      const jsonDataArray = Object.values(jsonData);
+
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
@@ -180,10 +324,10 @@ app.whenReady().then(() => {
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
           returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
           // console.log('SUCCESS:', returnData);
+          event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
       }
-      // console.log('SUCCESS:', returnData);
-      event.reply('get_SceneData-reply', { success: true, data: returnData });
+
     });
   });
 
@@ -242,6 +386,8 @@ function call_pySceneDetect(event) {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+
+
     app.quit()
   }
 })
