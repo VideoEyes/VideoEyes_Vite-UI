@@ -178,7 +178,7 @@ app.whenReady().then(() => {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
+          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
           // console.log('SUCCESS:', returnData);
         }
       }
@@ -272,11 +272,11 @@ async function gemini_process_all(AD_json,event) {
     for (const key of jsonIndex) {
       const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
       const uri = await gemini_uploadFile(key + '.mp4', filePath);
-      const response = await gemini_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.0-pro-vision', uri);
-      jsonData[key]["AD-content"] = response;
+      const response = await gemini_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', constants.GEMINI_MODEL, uri);
+      jsonData[key]["AD-content"][0] = response;
       console.log('key:', key, 'response:', response);
-      // 暫停1秒
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 暫停1分鐘
+      await new Promise(resolve => setTimeout(resolve, 20000));
     }
     console.log('jsonData:', jsonData);
     fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {

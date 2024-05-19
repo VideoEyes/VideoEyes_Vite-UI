@@ -6,7 +6,7 @@ const { VertexAI } = require('@google-cloud/vertexai');
 async function sendMultiModalPromptWithVideo(
     projectId = '	gemini-rain-py',
     location = 'us-central1',
-    model = 'gemini-1.0-pro-vision',
+    model = 'gemini-1.5-pro-preview-0514',
     uri = 'gs://gemini-ad-gen/pixel8.mp4'
 ) {
     // Initialize Vertex with your Cloud project and location
@@ -30,15 +30,15 @@ async function sendMultiModalPromptWithVideo(
                         },
                     },
                     {
-                        text: 'Describe this video.'
+                        text: '創建一個簡短的口述影像腳本。僅包含50字旁白，儘量貼近原作品再現的原則。無須描述對話。'
                         //'你是一個口述影像撰稿員，謹守「反映及再現原作」，做到「信、達、雅」，儘量貼近原作品再現的原則。僅依照此影片片段產生150字畫面描述，無須完整故事，可觀描述人物動作、畫面即可。將不確定的是誤用A、B、C...表示',
                     },
                 ],
             },
         ],
         generationConfig: {
-            temperature: 0.2,
-            topP: 0.4,
+            //temperature: 0.2,
+            //topP: 0.4,
             // topK: 2,
             // candidateCount: integer,
             // maxOutputTokens: integer,
@@ -83,12 +83,12 @@ async function uploadFile(destFileName, filePath, bucketName) {
 }
 // Run the sample
 const bucketName = 'gemini-ad-gen';
-const videoFile = 'video.mp4';
+const videoFile = 'AD001.mp4';
 async function main() {
     const vido_uri = await uploadFile(videoFile, videoFile, bucketName);
     // console.log('Video URI:', vido_uri);
     // console.log('Sending multimodal prompt with video...');
-    sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.0-pro-vision', vido_uri);
+    sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-pro-preview-0514', vido_uri);
 }
 
 main().catch(console.error);

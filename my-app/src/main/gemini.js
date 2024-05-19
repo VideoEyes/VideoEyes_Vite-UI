@@ -24,7 +24,7 @@ export async function gemini_sendMultiModalPromptWithVideo(projectId, location, 
                             },
                         },
                         {
-                            text: '描述這部影片'
+                            text: '創建一個簡短的口述影像腳本。僅包含50字旁白，儘量貼近原作品再現的原則。無須描述對話。'
                         },
                     ],
                 },
