@@ -88,7 +88,7 @@ async function main() {
     const vido_uri = await uploadFile(videoFile, videoFile, bucketName);
     // console.log('Video URI:', vido_uri);
     // console.log('Sending multimodal prompt with video...');
-    sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-pro-preview-0514', vido_uri);
+    sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', vido_uri);
 }
 
 main().catch(console.error);
