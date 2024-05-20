@@ -19,6 +19,7 @@ let sceneStart_with_index = ref([] as any);
 let sceneStart: any = ref({});
 let KEY_main_json = ref([] as any);
 let FIRST_come_in_system = ref(true);
+
 onMounted(() => {
 
   // window.onbeforeunload = (event) => {
@@ -101,6 +102,17 @@ const Toast_delete = Swal.mixin({
     toast.onmouseleave = Swal.resumeTimer;
   }
 });
+
+function read_AD(){
+  if(nowSelectedAD == null){
+    Swal.fire({
+      icon: "error",
+      title: "請選擇要生成語音的口述影像",
+    });
+    return;
+  }
+  window.electron.ipcRenderer.send('read-AD',KEY_main_json.value[nowSelectedAD],nowAdChoice,sceneStart[KEY_main_json.value[nowSelectedAD]]);
+}
 
 function new_AD() {
   // console.log('write-file');
@@ -230,6 +242,7 @@ const { tools, windows, timeSettings } = toRefs(state)
 // const IMAGE = require.context('../picture/scene', false, /\.png$/)
 const toggleWindow = (window) => {
   change_AD_choice(window.number);
+  nowAdChoice = window.number;
   // console.log('toggleWindow', window.number);
   for (let i = 0; i < windows.value.length; i++) {
     windows.value[i].color = 'rgb(255,255,255)'
@@ -313,11 +326,12 @@ function get_ad_information(index, ttvalue) {
           口述影像內容: ${arg.data["AD-content"]}<br>
           `,
           icon: "warning",
-          showCancelButton: true,
+          showCancelButton: false,
           confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
           confirmButtonText: "對拉!! 媽的快點刪除",
           denyButtonText: "取消刪除",
+          showDenyButton: true,
         }).then((result) => {
           if (result.isConfirmed) {
             for (let key in all_information) {
@@ -395,7 +409,7 @@ function getShowTimeBar(ttvalue) {
           <div class="edit-button">
             <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
             <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
-
+            <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
           </div>
         </div>
         <div class="left_container">
