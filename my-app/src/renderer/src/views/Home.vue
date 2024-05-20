@@ -57,6 +57,25 @@ window.electron.ipcRenderer.once('start_PySceneDetect', (event, arg) => {
     // 顯示成功訊息
     console.log('成功');
     //切換至編輯頁面
+    //router.push('/edit');
+    //呼叫gemini
+    window.electron.ipcRenderer.send('start_gemini');
+    //關閉loading畫面
+    //overlayVisible.value = false;
+  } else {
+    // 顯示錯誤訊息
+    console.log('失敗');
+    handleFileChangeBack();
+    overlayVisible.value = false;
+  }
+});
+
+window.electron.ipcRenderer.once('gemini_end', (event, arg) => {
+  console.log('start_gemini結束', arg);
+  if(arg == 'Success') {
+    // 顯示成功訊息
+    console.log('成功');
+    //切換至編輯頁面
     router.push('/edit');
     //關閉loading畫面
     overlayVisible.value = false;
@@ -67,6 +86,8 @@ window.electron.ipcRenderer.once('start_PySceneDetect', (event, arg) => {
     overlayVisible.value = false;
   }
 });
+
+
 </script>
 
 <style scoped>

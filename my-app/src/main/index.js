@@ -6,6 +6,9 @@ import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
+import { constants } from './constants'
+import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
+
 const { dialog } = require('electron')
 const fs = require('fs')
 const path = require('path')
@@ -63,55 +66,6 @@ function createWindow() {
     // });
     mainWindow.close()
   });
-}
-
-async function call_vertexAI(projectId = 'duet-ai-rain-py',
-  location = 'asia-east1',
-  model = 'gemini-1.0-pro-vision',
-  video = PROJECT_PATH + '/video/video.mp4',
-  mimeType = 'video/mp4'
-) {
-
-  // Initialize Vertex with your Cloud project and location
-  const vertexAI = new VertexAI({ project: projectId, location: location });
-
-  // Instantiate the model
-  const generativeVisionModel = vertexAI.getGenerativeModel({
-    model: model,
-  });
-
-  // For images, the SDK supports both Google Cloud Storage URI and base64 strings
-  const filePart = {
-    fileData: {
-      fileUri: image,
-      mimeType: mimeType,
-    },
-  };
-
-  const textPart = {
-    text: 'You are an audio description generator. Generate a description for this video.',
-  };
-
-  const request = {
-    contents: [{ role: 'user', parts: [filePart, textPart] }],
-  };
-
-  console.log('Prompt Text:');
-  console.log(request.contents[0].parts[1].text);
-
-  console.log('Non-Streaming Response Text:');
-  // Create the response stream
-  const responseStream =
-    await generativeVisionModel.generateContentStream(request);
-
-  // Wait for the response stream to complete
-  const aggregatedResponse = await responseStream.response;
-
-  // Select the text from the response
-  const fullTextResponse =
-    aggregatedResponse.candidates[0].content.parts[0].text;
-
-  console.log(fullTextResponse);
 }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -288,6 +242,7 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonArray = Object.entries(jsonData);
+      event.reply('change-AD-choice-reply', jsonArray[now_Selected_AD][1]["AD-content"][ad_index - 1])
       // // console.log("jsonArray", jsonArray);
       jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index - 1;
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
@@ -377,13 +332,17 @@ app.whenReady().then(() => {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = jsonDataArray[i]["AD-content"][0];
+          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
       }
 
     });
+  });
+
+  ipcMain.on('start_gemini', async (event, arg) => {
+    gemini_process_all(output_json,event);
   });
 })
 
@@ -393,9 +352,9 @@ function call_pySceneDetect(event) {
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
   // const output_image = path.join(USER_DATA_PATH, 'image');
 
-  const output_json_dir = path.dirname(output_json);
-  if (!fs.existsSync(output_json_dir)) {
-    fs.mkdirSync(output_json_dir, { recursive: true });
+  const output_json_folder = path.dirname(output_json);
+  if (!fs.existsSync(output_json_folder)) {
+    fs.mkdirSync(output_json_folder, { recursive: true });
   }
   fs.writeFileSync(output_json, '');
   // if (!fs.existsSync(output_image)) {
@@ -408,10 +367,12 @@ function call_pySceneDetect(event) {
 
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
 
-  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}"`;
-  event.reply('meow', cmd);
-  console.log("123", USER_DATA_PATH);
-  console.log(cmd);
+  const FPS = 30;
+  const MIN_SCENE_LEN = 10;
+  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`;
+  // event.reply('meow', cmd);
+  // console.log("123", USER_DATA_PATH);
+  // console.log(cmd);
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
       console.error(`error: ${error}`);
@@ -427,6 +388,8 @@ function call_pySceneDetect(event) {
     }
   });
 }
+
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -450,4 +413,32 @@ app.on('window-all-closed', () => {
 
 
 
-
+async function gemini_process_all(AD_json,event) {
+  //read json file
+  const fs = require('fs');
+  const path = require('path');
+  //path: AD_json
+  fs.readFile(AD_json, 'utf8', async (err, data) => {
+    if (err) {
+      console.error('ERROR:', err);
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    const jsonIndex = Object.keys(jsonData);
+    for (const key of jsonIndex) {
+      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
+      const uri = await gemini_uploadFile(key + '.mp4', filePath);
+      const response = await gemini_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', constants.GEMINI_MODEL, uri);
+      jsonData[key]["AD-content"][0] = response;
+      console.log('key:', key, 'response:', response);
+      // 暫停1分鐘
+      await new Promise(resolve => setTimeout(resolve, 20000));
+    }
+    console.log('jsonData:', jsonData);
+    fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
+      if (err) return "FAIL";
+      console.log('The file has been saved!');
+      event.reply('gemini_end', "Success")
+    });
+  });
+}

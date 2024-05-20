@@ -102,3 +102,10 @@ $ npm run build:linux
 4. 在執行前須先登入 [`gcloud auth application-default login`](https://cloud.google.com/docs/authentication/provide-credentials-adc?hl=zh-cn#local-dev)
 5. 安裝 `npm install @google-cloud/vertex-ai`
 6. 執行 `node .\gemini.js`
+
+### 語音生成
+- 說明 : 生成語音
+- exe檔案 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
+- exe請放resources內
+- python使用 : python read.py [input_txt_Dir] [output_file]
+- exe使用 : .\read.exe [input_txt_Dir] [output_file]->(XXX.mp3)

@@ -192,6 +192,10 @@ function change_AD_choice(index) {
   console.log("change_AD", index);
   if (nowSelectedAD != null) {
     window.electron.ipcRenderer.send('change-AD-choice', nowSelectedAD, index);
+    window.electron.ipcRenderer.once('change-AD-choice-reply', (event, arg) => {
+      console.log(arg); // 輸出來自主進程的回覆
+      textareaValue.value = arg;
+    });
   }
 }
 
@@ -237,6 +241,7 @@ let totaltime = ref(0);
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
+let nowAdChoice = -1;
 
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
@@ -273,6 +278,7 @@ function check_AD_choice() {
         windows.value[i].color = 'rgb(255,255,255)'
       }
       windows.value[arg].color = 'rgb(0,0,0)'
+      nowAdChoice = arg
     });
   }
 }
@@ -294,7 +300,7 @@ function get_ad_information(index, ttvalue) {
   console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
-  window.electron.ipcRenderer.on('get_SceneData-reply', (event, arg) => {
+  window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
@@ -334,7 +340,8 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
-
+      textareaValue.value = arg.data["AD-content"][nowAdChoice];
+      // console.log(arg.data["AD-content"][0])
     } else {
       console.error('Error reading file:', arg.error);
     }

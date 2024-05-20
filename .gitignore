@@ -1,3 +1,7 @@
 my-app/resources/main.exe
 my-app/resources/video_cut.exe
 Gemini/video.mp4
+my-app/build
+*.env
+node_modules
+*.mp4
