@@ -227,7 +227,7 @@ app.whenReady().then(() => {
       const jsonArray = Object.entries(jsonData);
       // // console.log("jsonArray", jsonArray);
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
-      console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      // console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
       event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
     });
   });
@@ -337,7 +337,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('read-AD', async (event, arg,choice,theName) => {
-    console.log("arg", arg, choice,theName);
+    // console.log("arg", arg, choice,theName);
     call_readEXE(event,arg,choice,theName)
   });
 })
@@ -345,7 +345,7 @@ app.whenReady().then(() => {
 function call_readEXE(event,ADname,choice,theName) {
   let output_name =theName+".mp3";
   output_name = output_name.replace(/:/g, "_");
-  console.log(output_name);
+  // console.log(output_name);
   const output_audio = path.join(constants.AUDIO_FOLDER, output_name);
   if (!fs.existsSync(constants.AUDIO_FOLDER)) {
     fs.mkdirSync(constants.AUDIO_FOLDER, { recursive: true });
