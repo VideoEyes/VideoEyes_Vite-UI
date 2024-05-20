@@ -126,19 +126,19 @@ function delete_AD_hint() {
 }
 
 let NOW_select_AD_name = ref("");
-function SSS_AAA_DDD(){
-  console.log("NOW_select_AD_nameAAA", NOW_select_AD_name);
+function SSS_AAA_DDD() {
   if (NOW_select_AD_name.value == "") {
     Swal.fire({
       icon: "error",
       title: "請選擇要存檔的口述影像",
     });
+  } else {
+    let data = [NOW_select_AD_name.value, textareaValue.value];
+    console.log("data to be sent", data);
+    window.electron.ipcRenderer.send('SSS_AAA_DDD', data);
+    window.location.reload();
   }
-  let data = [NOW_select_AD_name["_value"].value, textareaValue];
-  console.log("data to be sent", data);
-  return;
-  window.electron.ipcRenderer.send('SSS_AAA_DDD', data);
-  window.location.reload();
+
 }
 
 

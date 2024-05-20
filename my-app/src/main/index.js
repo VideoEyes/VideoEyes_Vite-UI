@@ -272,7 +272,7 @@ app.whenReady().then(() => {
       const jsonArray = Object.entries(jsonData);
       // // console.log("jsonArray", jsonArray);
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
-      console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      // console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
       event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
     });
   });
@@ -329,22 +329,32 @@ app.whenReady().then(() => {
       });
     });
   });
-  ipcMain.once('SSS_AAA_DDD', (event, content) => {
+  ipcMain.on('SSS_AAA_DDD', (event, content) => {
     console.log('SSS_AAA_DDD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
         return;
       }
+
+      // fs.writeFile(output_json, JSON.stringify(content, null, 4), "utf8", (err2) => {
+
+      // });
       const jsonData = JSON.parse(data);
-      const jsonDataArray = Object.values(jsonData);
-      let returnData = {};
-      for (let key in jsonDataArray) {
+      
+      
+      // const jsonDataArray = Object.values(jsonData);
+      for (let key in jsonData) {
+        console.log('data:', jsonData[key]["AD-content"]);
         if (key == content[0]) {
-          jsonDataArray[i]["AD-content"]["AD-content-ID"] = content[1];
+          let id = jsonData[key]["AD-content-ID"];
+          console.log('id:', id);
+          jsonData[key]["AD-content"][id] = content[1];
         }
       }
-      console.log('QQ:', jsonDataArray);
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => {});
+      console.log('jsonData:', jsonData);
+      // console.log('QQ:', jsonDataArray);
 
     });
 
