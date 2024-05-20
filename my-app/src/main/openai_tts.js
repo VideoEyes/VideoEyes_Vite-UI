@@ -14,3 +14,7 @@ async function AD_tts(timestamp, text) {
   const buffer = Buffer.from(await mp3.arrayBuffer());
   await fs.promises.writeFile(path.join(constants.AUDIO_FOLDER, `${timestamp}.mp3`), buffer);
 }
+
+module.exports = {
+  AD_tts,
+};
