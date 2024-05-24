@@ -9,6 +9,7 @@ import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
 
+const ffmpeg = require('fluent-ffmpeg');
 const { dialog } = require('electron')
 const fs = require('fs')
 const path = require('path')
@@ -17,7 +18,7 @@ const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
-import Swal from 'sweetalert2';
+// var ffmpeg = require('fluent-ffmpeg');
 
 
 // 主進程
@@ -140,6 +141,41 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+
+  // const fs = require('fs');
+  // const path = require('path');
+  const ffmpeg = require('fluent-ffmpeg');
+
+  ipcMain.on('mergeAudioToVideo', async (event, videoPath, audioPath, outputPath) => {
+    console.log('合并开始！', videoPath, audioPath, outputPath);
+    return new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(videoPath)
+        .input(audioPath)
+        .complexFilter('[0:a][1:a]amix=inputs=2:duration=first[a]')
+        .outputOptions('-map 0:v')
+        .outputOptions('-map [a]')
+        .outputOptions('-c:v copy')
+        .outputOptions('-c:a aac')
+        .outputOptions('-shortest')
+        .output(outputPath)
+        .on('start', commandLine => console.log(`Spawned Ffmpeg with command: ${commandLine}`))
+        .on('error', (err, stdout, stderr) => {
+          console.error('Error:', err);
+          console.error('ffmpeg stdout:', stdout);
+          console.error('ffmpeg stderr:', stderr);
+          reject(err);
+        })
+        .on('end', () => {
+          console.log('Finished processing');
+          resolve();
+        })
+        .run();
+    });
+  });
+
+
+
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -296,8 +332,8 @@ app.whenReady().then(() => {
 
       // });
       const jsonData = JSON.parse(data);
-      
-      
+
+
       // const jsonDataArray = Object.values(jsonData);
       for (let key in jsonData) {
         console.log('data:', jsonData[key]["AD-content"]);
@@ -307,7 +343,7 @@ app.whenReady().then(() => {
           jsonData[key]["AD-content"][id] = content[1];
         }
       }
-      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => {});
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => { });
       console.log('jsonData:', jsonData);
       // console.log('QQ:', jsonDataArray);
 
@@ -332,7 +368,7 @@ app.whenReady().then(() => {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
+          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0], '', '', ''];
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
@@ -342,7 +378,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    gemini_process_all(output_json,event);
+    gemini_process_all(output_json, event);
   });
 })
 
@@ -413,7 +449,7 @@ app.on('window-all-closed', () => {
 
 
 
-async function gemini_process_all(AD_json,event) {
+async function gemini_process_all(AD_json, event) {
   //read json file
   const fs = require('fs');
   const path = require('path');

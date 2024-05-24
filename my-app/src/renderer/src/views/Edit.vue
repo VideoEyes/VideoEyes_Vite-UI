@@ -37,6 +37,16 @@ onMounted(() => {
   initialalize();
 })
 
+
+// const ffmpeg = require('fluent-ffmpeg');
+import ffmpeg from 'fluent-ffmpeg';
+
+function mergeAudioToVideo(videoPath, audioPath, outputPath) {
+  window.electron.ipcRenderer.send('mergeAudioToVideo', videoPath, audioPath, outputPath);
+}
+
+
+
 let all_information = ref({} as any);
 function initialalize() {
   sceneStart_with_index = ref([]);
@@ -313,10 +323,11 @@ function get_ad_information(index, ttvalue) {
           口述影像內容: ${arg.data["AD-content"]}<br>
           `,
           icon: "warning",
-          showCancelButton: true,
+          showCancelButton: false,
           confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
           confirmButtonText: "對拉!! 媽的快點刪除",
+          showDenyButton: true,
           denyButtonText: "取消刪除",
         }).then((result) => {
           if (result.isConfirmed) {
@@ -439,6 +450,7 @@ function getShowTimeBar(ttvalue) {
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
             <div class="ad_tool_add">要刪除</div>
             <div class="ad_tool_add" @click="SSS_AAA_DDD">存檔口述影像</div>
+            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4')">輸出檔案</div>
           </div>
         </div>
       </div>
