@@ -164,7 +164,7 @@ app.whenReady().then(() => {
       const minutes = parseInt(parts[1], 10);
       const seconds = parseFloat(parts[2]);
       var now_time = 0;
-      now_time = parseInt(((hours * 60 * 60) + (minutes * 60) + seconds) * 1000);
+      now_time = parseInt((hours * 60 * 60) + (minutes * 60) + seconds * 1000);
       console.log('delay:', now_time);
       return new Promise((resolve, reject) => {
         ffmpeg()
