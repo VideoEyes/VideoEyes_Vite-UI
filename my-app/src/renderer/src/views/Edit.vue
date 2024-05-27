@@ -316,7 +316,7 @@ function get_ad_information(index, ttvalue) {
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
-    scene_output_video.value = arg["index"];
+    scene_output_video.value = arg.data["index"];
     console.log("scene_output_video", scene_output_video);
     if (arg.success) {
       if (delete_flag.value) {
