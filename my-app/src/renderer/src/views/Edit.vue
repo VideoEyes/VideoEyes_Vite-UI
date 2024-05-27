@@ -458,10 +458,8 @@ function getShowTimeBar(ttvalue) {
           <div class="ad_tool">
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
             <div class="ad_tool_add">要刪除</div>
-            <div class="ad_tool_add" @click="SSS_AAA_DDD">存檔口述影像</div>
             <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4',scene_output_video)">輸出檔案</div>
             <div class="ad_tool_add" @click="save_AD">存檔口述影像</div>
-            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4')">輸出檔案</div>
           </div>
         </div>
       </div>
