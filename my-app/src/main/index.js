@@ -8,6 +8,7 @@ import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
+import { call_readEXE,call_readEXE_recursive } from './ad_to_mp3'
 import { call_readEXE } from './ad_to_mp3'
 import { finally_video } from './finally_video'
 
@@ -350,6 +351,11 @@ app.whenReady().then(() => {
 
   ipcMain.on('read-AD', async (event, arg, choice, theName) => {
     // console.log("arg", arg, choice,theName);
+    call_readEXE(arg,choice,theName)
+  });
+
+  ipcMain.on('read-All-AD', async (event) => {
+    call_readEXE_recursive()
     call_readEXE(event, arg, choice, theName)
   });
 })

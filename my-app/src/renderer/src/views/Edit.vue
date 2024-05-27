@@ -417,6 +417,10 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
+function re_read_AD(){
+  window.electron.ipcRenderer.send('read-All-AD');
+}
+
 </script>
 
 <template>
@@ -430,6 +434,7 @@ function getShowTimeBar(ttvalue) {
             <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
             <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
             <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
+            <el-button type="danger" id="" @click="re_read_AD()">生成全部語音</el-button>
           </div>
         </div>
         <div class="left_container">
