@@ -13,6 +13,7 @@ import router from '../router';
 import Swal from 'sweetalert2';
 
 var nowSelectedAD = null; //現在選擇的AD，全域變數(待修改)
+var nowSelectedADIndex = null; //現在選擇的AD，全域變數(待修改)
 import { watch } from 'vue';
 
 let sceneStart_with_index = ref([] as any);
@@ -63,7 +64,7 @@ function initialalize() {
       // 寫檔案暫存到json  
       for (let key in arg.data) {
         KEY_main_json.value.push(key);
-        console.log("KEY_main_json", KEY_main_json);
+        // console.log("KEY_main_json", KEY_main_json);
         sceneStart[key] = arg.data[key]["scene-start-time"];
       }
       for (const [key, value] of Object.entries(sceneStart)) {
@@ -137,16 +138,18 @@ function delete_AD_hint() {
 }
 
 let NOW_select_AD_name = ref("");
-function SSS_AAA_DDD() {
+
+function save_AD() {
+  // console.log("save_AD");
   if (NOW_select_AD_name.value == "") {
     Swal.fire({
       icon: "error",
       title: "請選擇要存檔的口述影像",
     });
   } else {
-    let data = [NOW_select_AD_name.value, textareaValue.value];
-    console.log("data to be sent", data);
-    window.electron.ipcRenderer.send('SSS_AAA_DDD', data);
+    // let data = [NOW_select_AD_name.value, textareaValue.value];
+    // console.log("data to be sent", data);
+    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex,textareaValue.value,nowAdChoice);
     window.location.reload();
   }
 
@@ -200,7 +203,7 @@ function Store_AD() {
 }
 
 function change_AD_choice(index) {
-  console.log("change_AD", index);
+  // console.log("change_AD", index);
   if (nowSelectedAD != null) {
     window.electron.ipcRenderer.send('change-AD-choice', nowSelectedAD, index);
     window.electron.ipcRenderer.once('change-AD-choice-reply', (event, arg) => {
@@ -239,7 +242,9 @@ const state = reactive({
 })
 const { tools, windows, timeSettings } = toRefs(state)
 // const IMAGE = require.context('../picture/scene', false, /\.png$/)
+let nowAdChoice = -1;
 const toggleWindow = (window) => {
+  nowAdChoice = window.number - 1;
   change_AD_choice(window.number);
   // console.log('toggleWindow', window.number);
   for (let i = 0; i < windows.value.length; i++) {
@@ -252,7 +257,6 @@ let totaltime = ref(0);
 let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
-let nowAdChoice = -1;
 
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
@@ -354,7 +358,9 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
+      nowAdChoice = arg.data["AD-content-ID"];
       textareaValue.value = arg.data["AD-content"][nowAdChoice];
+      nowSelectedADIndex = arg.data["index"];
       // console.log(arg.data["AD-content"][0])
     } else {
       console.error('Error reading file:', arg.error);
@@ -393,7 +399,7 @@ function getShowTimeBar(ttvalue) {
       SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
     }
   }
-  console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
+  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
   return SHOW_TIME_BAR.value;
 }
 
@@ -454,6 +460,8 @@ function getShowTimeBar(ttvalue) {
             <div class="ad_tool_add">要刪除</div>
             <div class="ad_tool_add" @click="SSS_AAA_DDD">存檔口述影像</div>
             <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4',scene_output_video)">輸出檔案</div>
+            <div class="ad_tool_add" @click="save_AD">存檔口述影像</div>
+            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4')">輸出檔案</div>
           </div>
         </div>
       </div>

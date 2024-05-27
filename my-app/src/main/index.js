@@ -346,33 +346,22 @@ app.whenReady().then(() => {
       });
     });
   });
-  ipcMain.on('SSS_AAA_DDD', (event, content) => {
-    console.log('SSS_AAA_DDD:', content);
+
+  ipcMain.on('save_AD', (event, NOW_select_AD_name_value,textareaValue_value,NOW_Ad_Choice) => {
+    // console.log('save_AD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
         return;
       }
 
-      // fs.writeFile(output_json, JSON.stringify(content, null, 4), "utf8", (err2) => {
-
-      // });
       const jsonData = JSON.parse(data);
+      // console.log('NOW_select_AD_name_value:', NOW_select_AD_name_value);
+      // console.log('textareaValue_value:', textareaValue_value);
+      // console.log('NOW_Ad_Choice:', NOW_Ad_Choice);
+      jsonData[NOW_select_AD_name_value]["AD-content"][NOW_Ad_Choice] = textareaValue_value;
 
-
-      // const jsonDataArray = Object.values(jsonData);
-      for (let key in jsonData) {
-        console.log('data:', jsonData[key]["AD-content"]);
-        if (key == content[0]) {
-          let id = jsonData[key]["AD-content-ID"];
-          console.log('id:', id);
-          jsonData[key]["AD-content"][id] = content[1];
-        }
-      }
       fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => { });
-      console.log('jsonData:', jsonData);
-      // console.log('QQ:', jsonDataArray);
-
     });
 
   });
@@ -387,14 +376,16 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-
+      const jsonDataIndex = Object.keys(jsonData); 
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0], '', '', ''];
+          returnData["AD-content"] = jsonDataArray[i]["AD-content"];
+          returnData["AD-content-ID"] = jsonDataArray[i]["AD-content-ID"];
+          returnData["index"] = jsonDataIndex[i]; //為了知道index
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
