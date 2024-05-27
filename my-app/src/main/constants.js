@@ -8,6 +8,7 @@ const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const CLIPS_FOLDER = path.join(PROJECT_PATH, 'video');
 const AUDIO_FOLDER = path.join(PROJECT_PATH, 'audio');
 const GEMINI_MODEL = 'gemini-1.5-pro-preview-0514';
+const AUDIO_FOLDER = path.join(PROJECT_PATH, 'audio');
 
 export const constants = {
   USER_DATA_PATH: USER_DATA_PATH,

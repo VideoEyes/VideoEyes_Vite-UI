@@ -5,6 +5,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
+import readFromJsonEXE from '../../resources/readFromJson.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
@@ -389,7 +390,39 @@ app.whenReady().then(() => {
   ipcMain.on('start_gemini', async (event, arg) => {
     gemini_process_all(output_json, event);
   });
+
+  ipcMain.on('read-AD', async (event, arg,choice,theName) => {
+    // console.log("arg", arg, choice,theName);
+    call_readEXE(event,arg,choice,theName)
+  });
 })
+
+function call_readEXE(event,ADname,choice,theName) {
+  let output_name =theName+".mp3";
+  output_name = output_name.replace(/:/g, "_");
+  // console.log(output_name);
+  const output_audio = path.join(constants.AUDIO_FOLDER, output_name);
+  if (!fs.existsSync(constants.AUDIO_FOLDER)) {
+    fs.mkdirSync(constants.AUDIO_FOLDER, { recursive: true });
+  }
+  const readEXEPath = readFromJsonEXE;
+  const cmd = `"${readEXEPath}" "${output_json}" "${output_audio}" "${ADname}" "${choice}"`;
+
+  exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`error: ${error}`);
+      return;
+    }
+    // console.log(stdout);
+    if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
+      console.log('exe Done');
+      event.reply('readFromJson', "Success")
+    } else {
+      console.log('exe error');
+      event.reply('readFromJson', "Fail")
+    }
+  });
+}
 
 
 function call_pySceneDetect(event) {

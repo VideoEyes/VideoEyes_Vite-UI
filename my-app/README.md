@@ -107,5 +107,5 @@ $ npm run build:linux
 - 說明 : 生成語音
 - exe檔案 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
 - exe請放resources內
-- python使用 : python read.py [input_txt_Dir] [output_file]
-- exe使用 : .\read.exe [input_txt_Dir] [output_file]->(XXX.mp3)
+- python使用 : python .\readFromJson.py [讀取json位置] [存mp3位置(.mp3)] [AD index] [AD choice]
+- exe使用 : .\readFromJson.exe [讀取json位置] [存mp3位置(.mp3)] [AD index] [AD choice]
