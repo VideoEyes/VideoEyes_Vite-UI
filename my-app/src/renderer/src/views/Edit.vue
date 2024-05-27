@@ -41,8 +41,9 @@ onMounted(() => {
 // const ffmpeg = require('fluent-ffmpeg');
 import ffmpeg from 'fluent-ffmpeg';
 
-function mergeAudioToVideo(videoPath, audioPath, outputPath) {
-  window.electron.ipcRenderer.send('mergeAudioToVideo', videoPath, audioPath, outputPath);
+function mergeAudioToVideo(videoPath, audioPath, outputPath,scene_output_video) {
+  console.log("mergeAudioToVideo", videoPath, audioPath, outputPath,scene_output_video);
+  window.electron.ipcRenderer.send('mergeAudioToVideo', videoPath, audioPath, outputPath,scene_output_video);
 }
 
 
@@ -293,7 +294,7 @@ function check_AD_choice() {
   }
 }
 
-
+let scene_output_video = ref("" as any);
 function get_ad_information(index, ttvalue) {
   var temp = 0;
   for (var i = 0; i < sceneStart_with_index.value.length; i++) {
@@ -311,6 +312,8 @@ function get_ad_information(index, ttvalue) {
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
+    scene_output_video.value = arg["index"];
+    console.log("scene_output_video", scene_output_video);
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
@@ -450,7 +453,7 @@ function getShowTimeBar(ttvalue) {
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
             <div class="ad_tool_add">要刪除</div>
             <div class="ad_tool_add" @click="SSS_AAA_DDD">存檔口述影像</div>
-            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4')">輸出檔案</div>
+            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4',scene_output_video)">輸出檔案</div>
           </div>
         </div>
       </div>

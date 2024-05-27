@@ -146,13 +146,42 @@ app.whenReady().then(() => {
   // const path = require('path');
   const ffmpeg = require('fluent-ffmpeg');
 
-  ipcMain.on('mergeAudioToVideo', async (event, videoPath, audioPath, outputPath) => {
-    console.log('合并开始！', videoPath, audioPath, outputPath);
+  function convertTimeToMilliseconds(time) {
+    const parts = time.split(':');
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseFloat(parts[2]);
+    return ((hours * 60 * 60) + (minutes * 60) + seconds) * 1000;
+  }
+
+  ipcMain.on('mergeAudioToVideo', async (event, videoPath, audioPath, outputPath,scene_output_video) => {
+    console.log('合并开始！', videoPath, audioPath, outputPath,scene_output_video);
+    var delay = "";
+    fs.readFile(output_json, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      const jsonData = JSON.parse(data);
+      // delay = jsonData[scene_output_video]["scene-start-time"];
+      console.log('delay:', scene_output_video);
+    });
+    delay = convertTimeToMilliseconds(delay); 
+
+    
     return new Promise((resolve, reject) => {
       ffmpeg()
         .input(videoPath)
         .input(audioPath)
-        .complexFilter('[0:a][1:a]amix=inputs=2:duration=first[a]')
+        .complexFilter([
+          '[0:a][1:a]amix=inputs=2:duration=first[a]',
+          {
+            filter: 'adelay',
+            options: `${delay}|${delay}`,
+            inputs: 'a',
+            outputs: 'delayed'
+          }
+        ])
         .outputOptions('-map 0:v')
         .outputOptions('-map [a]')
         .outputOptions('-c:v copy')
@@ -173,9 +202,6 @@ app.whenReady().then(() => {
         .run();
     });
   });
-
-
-
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
