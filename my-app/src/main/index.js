@@ -8,6 +8,9 @@ import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
+import { gemini_1_5_sendMultiModalPromptWithVideo, gemini_1_5_uploadFile } from './AD-Gen-1.5'
+import { AD_tts } from './openai_tts'
+import { mergeAllAudioToVideo, mergeAudioToVideo } from './audio_merge'
 
 const { dialog } = require('electron')
 const fs = require('fs')
@@ -113,11 +116,42 @@ app.whenReady().then(() => {
     }
     //rename video file
     const output_file = path.join(output, "video.mp4")
-    fs.copyFile(input, output_file, (err) => {
+    fs.copyFile(input, output_file, async (err) => {
       if (err) throw err
-      else {
+      else if (arg === 'open') {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
+      } else if (arg === 'generate') {
+        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH);
+        console.log("videoUri: "+videoUri);
+        const audioText = await gemini_1_5_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', videoUri);
+        console.log("audioText:" + audioText);
+        const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/);
+        let audioText_json = [];
+        // 確保匹配到了 JSON 部分
+        if (jsonMatch && jsonMatch[1]) {
+          const jsonString = jsonMatch[1];
+          try {
+            audioText_json = JSON.parse(jsonString);
+            console.log(audioText_json);
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+          }
+        } else {
+          console.error('No JSON found in the text.');
+        }
+        for (let i = 0; i < audioText_json.length; i++) {
+          const timestamp = audioText_json[i].time;
+          const text = audioText_json[i].content;
+          try {
+            await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
+          } catch (error) {
+            console.error('Error:', error);
+          }
+          
+        }
+
+        await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
       }
     })
   })
@@ -322,7 +356,7 @@ app.whenReady().then(() => {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
+          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0], '', '', ''];
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
@@ -332,7 +366,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    gemini_process_all(output_json,event);
+    gemini_process_all(output_json, event);
   });
 })
 
@@ -403,7 +437,7 @@ app.on('window-all-closed', () => {
 
 
 
-async function gemini_process_all(AD_json,event) {
+async function gemini_process_all(AD_json, event) {
   //read json file
   const fs = require('fs');
   const path = require('path');
