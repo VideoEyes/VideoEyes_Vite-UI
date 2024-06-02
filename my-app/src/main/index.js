@@ -140,16 +140,22 @@ app.whenReady().then(() => {
         } else {
           console.error('No JSON found in the text.');
         }
+        if (fs.existsSync(constants.AUDIO_FOLDER)) {
+          try {
+            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
+            console.log('The folder has been deleted!');
+        
+            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
+            console.log('The folder has been created!');
+          } catch (error) {
+            console.error('Error clearing and creating folder:', error);
+          }
+        }
+        
         for (let i = 0; i < audioText_json.length; i++) {
           const timestamp = audioText_json[i].time;
           const text = audioText_json[i].content;
-          try {
-            // 清空 audio 資料夾
-            fs.rmdirSync(constants.AUDIO_FOLDER, { recursive: true });
-            await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
-          } catch (error) {
-            console.error('Error:', error);
-          }
+          await AD_tts(timestamp,text, constants.AUDIO_FOLDER);  
         }
         /*
         "AD001": {
