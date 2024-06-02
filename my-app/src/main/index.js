@@ -144,16 +144,59 @@ app.whenReady().then(() => {
         } else {
           console.error('No JSON found in the text.');
         }
+        if (fs.existsSync(constants.AUDIO_FOLDER)) {
+          try {
+            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
+            console.log('The folder has been deleted!');
+        
+            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
+            console.log('The folder has been created!');
+          } catch (error) {
+            console.error('Error clearing and creating folder:', error);
+          }
+        }
+        
         for (let i = 0; i < audioText_json.length; i++) {
           const timestamp = audioText_json[i].time;
           const text = audioText_json[i].content;
-          try {
-            await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
-          } catch (error) {
-            console.error('Error:', error);
-          }
-          
+          await AD_tts(timestamp,text, constants.AUDIO_FOLDER);  
         }
+        /*
+        "AD001": {
+        "scene-start-time": "00:00:00.000",
+        "scene-end-time": "00:00:13.167",
+        "AD-start-time": "00:00:00.000",
+        "AD-content": [
+                "狗狗貓\n",
+                "455454",
+                "877",
+                "999",
+            ],
+            "AD-content-ID": 0
+        },
+        */
+        let mainJson = {};
+        for (let i = 0; i < audioText_json.length; i++) {
+          const timestamp = audioText_json[i].time;
+          //TODO: 取影片長度
+          const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : "00:00:00.000";
+          const text = audioText_json[i].content;
+          mainJson['AD'+ String(i+1).padStart(3,0)] = {
+            "scene-start-time": timestamp,
+            "scene-end-time": next_timestamp,
+            "AD-start-time": timestamp,
+            "AD-content": [text, '', '', ''],
+            "AD-content-ID": 0
+          };
+        }
+        console.log('mainJson:', mainJson);
+        fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
+          if (err) {
+            console.error('ERROR:', err);
+            return;
+          }
+          console.log('The file has been saved!');
+        });
 
         await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
       }

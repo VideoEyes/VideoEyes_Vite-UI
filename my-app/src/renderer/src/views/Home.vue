@@ -13,7 +13,7 @@
 
   <div class="actions">
     <div class="action">
-      <a target="_blank" rel="noreferrer" @click="handleFileChange">選擇檔案</a>
+      <a target="_blank" rel="noreferrer" @click="handleFileChange">開新專案</a>
     </div>
     <div class="action">
       <a target="_blank" rel="noreferrer" @click="openOldFile">開啟舊檔</a>
