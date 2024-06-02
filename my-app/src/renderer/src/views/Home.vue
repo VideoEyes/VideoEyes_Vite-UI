@@ -1,4 +1,7 @@
 <template>
+  <!-- 這裡要最component -->
+  <!-- <New_add/> -->
+
   <img alt="logo" class="logo" src="../assets/Logo_HD_blue.png" />
   <div class="creator" style="text-align: center;">Made by <br> PENG-YU CHENG, CHUAN-KAI LIU, YINE-ZHE CHUANG, CHIH
     CHUAN YANG</div>
@@ -26,6 +29,7 @@ import { ref } from 'vue';
 import Versions from '../components/Versions.vue';
 import router from '../router';
 import Swal from 'sweetalert2';
+import  New_add  from '../components/New_add.vue';
 
 const overlayVisible = ref(false);
 

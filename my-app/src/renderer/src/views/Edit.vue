@@ -476,16 +476,26 @@ function re_read_AD() {
             </form>
           </div>
           <div class="ad_tool">
-            <div class = "Tool">
+            <div class="Tool">
+              <div class="ad_tool_add" @click="Store_AD">Gemini</div>
+              <div class="ad_tool_add">試聽</div>
+            </div>
+            <!-- <div class = "Tool">
               <div class="ad_tool_add" @click="Store_AD">要新增</div>
               <div class="ad_tool_add">要刪除</div>
+            </div> -->
+            <div class="Tool">
+              <div class="ad_tool_add"
+                @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
+                刪除</div>
+              <div class="ad_tool_add" @click="save_AD">儲存</div>
             </div>
-            <div class = "Tool">
+            <!-- <div class = "Tool">
               <div class="ad_tool_add"
                 @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
                 輸出檔案</div>
               <div class="ad_tool_add" @click="save_AD">存檔口述</div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -507,7 +517,7 @@ function re_read_AD() {
 
     <div class="down" id="ALL">
       <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
-
+      <!-- 
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"
           :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
@@ -516,8 +526,8 @@ function re_read_AD() {
         {{ now_video_time }}
         <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
 
-      </div>
-
+      </div> -->
+      <img src="../picture/sound-8825_512.gif" width="1500px"height="100px"   alt="Description of the GIF">
 
       <button class="right_arrow"
         @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">123456</button>

@@ -37,7 +37,7 @@
     margin: 15px;
     border-radius: 8px;
     width: 280px;
-    height: 245px;
+    height: 285px;
 }
 
 
@@ -201,7 +201,7 @@ hr {
 }
 
 .ad_tool {
-    margin-top: 20px;
+    margin-bottom: 10px;
     text-align: right;
 }
 
@@ -309,6 +309,7 @@ hr {
 .Tool{
     display: flex;
     justify-content: space-around;
+    margin-bottom:10px;
     text-align: center;
 }
 
@@ -319,7 +320,7 @@ hr {
     border-radius: 10px;
     
     background-color: #282828;
-    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+    /* box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5); */
 }
 
 .ad_tool_add:hover{
