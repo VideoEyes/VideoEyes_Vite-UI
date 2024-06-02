@@ -317,6 +317,11 @@ hr {
     margin-bottom:10px;
     text-align: center;
 }
+video{
+    width: 100%;
+    height: auto;
+}
+
 
 .ad_tool_add{
     width: 100px;

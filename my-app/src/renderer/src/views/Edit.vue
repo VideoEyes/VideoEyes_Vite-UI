@@ -450,7 +450,7 @@ function re_read_AD() {
         </div>
       </div>
       <div class="top__middle">
-        <video controls width="640" height="360">
+        <video controls >
           <source id="video" src="" type="video/mp4">
           Your browser does not support the video tag.
         </video>
