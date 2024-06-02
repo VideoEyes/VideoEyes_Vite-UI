@@ -1,14 +1,13 @@
 <template>
     <div class="content">
         <div class="header">
-            <img src="../assets/back_arrow.png" alt="logo" @click="router.push('/edit')"/>
+            <el-button type="success" id="to_edit" @click="router.push('/edit')" class="title-button">Edit</el-button>
             <div class="title">Project Name</div>
         </div>
         <div class="main">
             <div class="video-container">
                 <video controls>
-                    <source id="video" src="" type="video/mp4">
-                    Your browser does not support the video tag.
+                    <source id="video" src="" type="video/mp4">Your browser does not support the video tag.
                 </video>
             </div>
         </div>

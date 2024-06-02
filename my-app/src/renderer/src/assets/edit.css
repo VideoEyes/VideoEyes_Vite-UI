@@ -304,7 +304,12 @@ hr {
     height: 15px;
 }
 
-
+.right_arrow{
+    height: auto;
+    width: 50px;
+    background-color: transparent;
+    border: none;
+}
 
 .Tool{
     display: flex;

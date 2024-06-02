@@ -8,6 +8,9 @@ import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
+import { gemini_1_5_sendMultiModalPromptWithVideo, gemini_1_5_uploadFile } from './AD-Gen-1.5'
+import { AD_tts } from './openai_tts'
+import { mergeAllAudioToVideo, mergeAudioToVideo } from './audio_merge'
 import { call_readEXE,call_readEXE_recursive } from './ad_to_mp3'
 import { finally_video } from './finally_video'
 
@@ -117,11 +120,42 @@ app.whenReady().then(() => {
     }
     //rename video file
     const output_file = path.join(output, "video.mp4")
-    fs.copyFile(input, output_file, (err) => {
+    fs.copyFile(input, output_file, async (err) => {
       if (err) throw err
-      else {
+      else if (arg === 'open') {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
+      } else if (arg === 'generate') {
+        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH);
+        console.log("videoUri: "+videoUri);
+        const audioText = await gemini_1_5_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', videoUri);
+        console.log("audioText:" + audioText);
+        const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/);
+        let audioText_json = [];
+        // 確保匹配到了 JSON 部分
+        if (jsonMatch && jsonMatch[1]) {
+          const jsonString = jsonMatch[1];
+          try {
+            audioText_json = JSON.parse(jsonString);
+            console.log(audioText_json);
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+          }
+        } else {
+          console.error('No JSON found in the text.');
+        }
+        for (let i = 0; i < audioText_json.length; i++) {
+          const timestamp = audioText_json[i].time;
+          const text = audioText_json[i].content;
+          try {
+            await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
+          } catch (error) {
+            console.error('Error:', error);
+          }
+          
+        }
+
+        await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
       }
     })
   })
@@ -139,9 +173,7 @@ app.whenReady().then(() => {
 
   ipcMain.on('get-output-video-path', async (event, arg) => {
     //const USER_DATA_PATH = app.getPath('userData')
-    const output = path.join(PROJECT_PATH, 'video')
-    const output_file = path.join(output, "video.mp4")
-    event.returnValue = output_file
+    event.returnValue = constants.OUTPUT_VIDEO_PATH
   })
 
   //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
