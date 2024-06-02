@@ -237,7 +237,7 @@ app.whenReady().then(() => {
     try {
       const result = await call_readEXE_recursive();
       if (result) {
-        finally_video();
+        await finally_video();
         event.reply('mergeAudioToVideo-reply', true);
       } else {
         console.error('Error: Not all EXE calls completed successfully.');
