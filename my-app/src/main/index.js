@@ -8,16 +8,23 @@ import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
+import { gemini_1_5_sendMultiModalPromptWithVideo, gemini_1_5_uploadFile } from './AD-Gen-1.5'
+import { AD_tts } from './openai_tts'
+import { mergeAllAudioToVideo, mergeAudioToVideo } from './audio_merge'
+import { call_readEXE,call_readEXE_recursive } from './ad_to_mp3'
+import { finally_video } from './finally_video'
 
-const { dialog } = require('electron')
-const fs = require('fs')
-const path = require('path')
-const { exec } = require('child_process')
-const USER_DATA_PATH = app.getPath('userData')
-const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+
+const ffmpeg = require('fluent-ffmpeg');
+const { dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const USER_DATA_PATH = app.getPath('userData');
+const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name');
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
-import Swal from 'sweetalert2';
+// var ffmpeg = require('fluent-ffmpeg');
 
 
 // 主進程
@@ -113,14 +120,90 @@ app.whenReady().then(() => {
     }
     //rename video file
     const output_file = path.join(output, "video.mp4")
-    fs.copyFile(input, output_file, (err) => {
+    fs.copyFile(input, output_file, async (err) => {
       if (err) throw err
-      else {
+      else if (arg === 'open') {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
+      } else if (arg === 'generate') {
+        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH);
+        console.log("videoUri: "+videoUri);
+        const audioText = await gemini_1_5_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', videoUri);
+        console.log("audioText:" + audioText);
+        const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/);
+        let audioText_json = [];
+        // 確保匹配到了 JSON 部分
+        if (jsonMatch && jsonMatch[1]) {
+          const jsonString = jsonMatch[1];
+          try {
+            audioText_json = JSON.parse(jsonString);
+            console.log(audioText_json);
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
+          }
+        } else {
+          console.error('No JSON found in the text.');
+        }
+        if (fs.existsSync(constants.AUDIO_FOLDER)) {
+          try {
+            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
+            console.log('The folder has been deleted!');
+        
+            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
+            console.log('The folder has been created!');
+          } catch (error) {
+            console.error('Error clearing and creating folder:', error);
+          }
+        }
+        
+        for (let i = 0; i < audioText_json.length; i++) {
+          const timestamp = audioText_json[i].time;
+          const text = audioText_json[i].content;
+          await AD_tts(timestamp,text, constants.AUDIO_FOLDER);  
+        }
+        /*
+        "AD001": {
+        "scene-start-time": "00:00:00.000",
+        "scene-end-time": "00:00:13.167",
+        "AD-start-time": "00:00:00.000",
+        "AD-content": [
+                "狗狗貓\n",
+                "455454",
+                "877",
+                "999",
+            ],
+            "AD-content-ID": 0
+        },
+        */
+        let mainJson = {};
+        for (let i = 0; i < audioText_json.length; i++) {
+          const timestamp = audioText_json[i].time;
+          //TODO: 取影片長度
+          const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : "00:00:00.000";
+          const text = audioText_json[i].content;
+          mainJson['AD'+ String(i+1).padStart(3,0)] = {
+            "scene-start-time": timestamp,
+            "scene-end-time": next_timestamp,
+            "AD-start-time": timestamp,
+            "AD-content": [text, '', '', ''],
+            "AD-content-ID": 0
+          };
+        }
+        console.log('mainJson:', mainJson);
+        fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
+          if (err) {
+            console.error('ERROR:', err);
+            return;
+          }
+          console.log('The file has been saved!');
+        });
+
+        await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
+        event.reply('generate-reply', true);
       }
     })
   })
+
 
   // return video file path
   // 影片檔案名稱: video.mp4
@@ -133,6 +216,11 @@ app.whenReady().then(() => {
     event.returnValue = output_file
   })
 
+  ipcMain.on('get-output-video-path', async (event, arg) => {
+    //const USER_DATA_PATH = app.getPath('userData')
+    event.returnValue = constants.OUTPUT_VIDEO_PATH
+  })
+
   //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
   ipcMain.on('start_PySceneDetect', async (event, arg) => {
     call_pySceneDetect(event)
@@ -140,6 +228,24 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+
+  // const fs = require('fs');
+  // const path = require('path');
+  const ffmpeg = require('fluent-ffmpeg');
+
+  ipcMain.on('mergeAudioToVideo', async (event) => {
+    try {
+      const result = await call_readEXE_recursive();
+      if (result) {
+        finally_video();
+        event.reply('mergeAudioToVideo-reply', true);
+      } else {
+        console.error('Error: Not all EXE calls completed successfully.');
+      }
+    } catch (error) {
+      console.error('Error in mergeAudioToVideo:', error);
+    }
+  });
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -226,7 +332,7 @@ app.whenReady().then(() => {
       const jsonArray = Object.entries(jsonData);
       // // console.log("jsonArray", jsonArray);
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
-      console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
+      // console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
       event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
     });
   });
@@ -284,23 +390,24 @@ app.whenReady().then(() => {
       });
     });
   });
-  ipcMain.once('SSS_AAA_DDD', (event, content) => {
-    console.log('SSS_AAA_DDD:', content);
+
+  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice,time1,time2,tim3) => {
+    // console.log('save_AD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err);
         return;
       }
-      const jsonData = JSON.parse(data);
-      const jsonDataArray = Object.values(jsonData);
-      let returnData = {};
-      for (let key in jsonDataArray) {
-        if (key == content[0]) {
-          jsonDataArray[i]["AD-content"]["AD-content-ID"] = content[1];
-        }
-      }
-      console.log('QQ:', jsonDataArray);
 
+      const jsonData = JSON.parse(data);
+      // console.log('NOW_select_AD_name_value:', NOW_select_AD_name_value);
+      // console.log('textareaValue_value:', textareaValue_value);
+      // console.log('NOW_Ad_Choice:', NOW_Ad_Choice);
+      jsonData[NOW_select_AD_name_value]["AD-content"][NOW_Ad_Choice] = textareaValue_value;
+      jsonData[NOW_select_AD_name_value]["scene-start-time"] = time1;
+      jsonData[NOW_select_AD_name_value]["scene-end-time"] = time2;
+      jsonData[NOW_select_AD_name_value]["AD-start-time"] = tim3;
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => { });
     });
 
   });
@@ -315,14 +422,16 @@ app.whenReady().then(() => {
       }
       const jsonData = JSON.parse(data);
       const jsonDataArray = Object.values(jsonData);
-
+      const jsonDataIndex = Object.keys(jsonData);
       let returnData = {};
       for (let i = 0; i < jsonDataArray.length; i++) {
         if (jsonDataArray[i]["scene-start-time"] == sceneData) {
           returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
           returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
           returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = [jsonDataArray[i]["AD-content"][0],'','',''];
+          returnData["AD-content"] = jsonDataArray[i]["AD-content"];
+          returnData["AD-content-ID"] = jsonDataArray[i]["AD-content-ID"];
+          returnData["index"] = jsonDataIndex[i]; //為了知道index
           // console.log('SUCCESS:', returnData);
           event.reply('get_SceneData-reply', { success: true, data: returnData });
         }
@@ -332,7 +441,16 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    gemini_process_all(output_json,event);
+    gemini_process_all(output_json, event);
+  });
+
+  ipcMain.on('read-AD', async (event, arg, choice, theName) => {
+    // console.log("arg", arg, choice,theName);
+    call_readEXE(arg,choice,theName)
+  });
+
+  ipcMain.on('read-All-AD', async (event) => {
+    call_readEXE_recursive()
   });
 })
 
@@ -403,7 +521,7 @@ app.on('window-all-closed', () => {
 
 
 
-async function gemini_process_all(AD_json,event) {
+async function gemini_process_all(AD_json, event) {
   //read json file
   const fs = require('fs');
   const path = require('path');
