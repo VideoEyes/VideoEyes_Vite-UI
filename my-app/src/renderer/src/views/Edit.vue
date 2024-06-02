@@ -136,14 +136,15 @@ function read_AD() {
 
 function new_AD() {
   // console.log('write-file');
-  Toast_add.fire({
-    icon: "success",
-    title: "可以新增口述影像瞜！",
-    text: "請點選右上角的時間參數，選擇要新增的時間點",
-  });
-  timeSettings.value[0].value = "";
-  timeSettings.value[1].value = "";
-  timeSettings.value[2].value = "";
+  Store_AD();
+  // Toast_add.fire({
+  //   icon: "success",
+  //   title: "可以新增口述影像瞜！",
+  //   text: "請點選右上角的時間參數，選擇要新增的時間點",
+  // });
+  // timeSettings.value[0].value = "";
+  // timeSettings.value[1].value = "";
+  // timeSettings.value[2].value = "";
 }
 
 let delete_flag = ref(false);
@@ -256,8 +257,8 @@ const state = reactive({
   ],
   timeSettings: [
     { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time1', checkboxId: 'time1', value: '' },
-    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time2', checkboxId: 'time2', value: '' },
-    { label: '場景開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time3', checkboxId: 'time3', value: '' },
+    { label: '場景結束時間', placeholder: '', checkboxValue: '1', checkboxName: 'time2', checkboxId: 'time2', value: '' },
+    { label: '旁白開始時間', placeholder: '', checkboxValue: '1', checkboxName: 'time3', checkboxId: 'time3', value: '' },
   ],
 })
 const { tools, windows, timeSettings } = toRefs(state)
@@ -425,8 +426,9 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
-function re_read_AD() {
-  window.electron.ipcRenderer.send('read-All-AD');
+async function re_read_AD() {
+  await window.electron.ipcRenderer.send('read-All-AD');
+  mergeAudioToVideo();
 }
 
 </script>
@@ -439,18 +441,25 @@ function re_read_AD() {
       <div class="top__left">
         <div class="left_title">
           <div class="edit-button">
-            <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
+            <div class="ATool">
+              <div class="ad_tool_add"  id="new_AD" @click="new_AD()">新增</div>
+              <div class="ad_tool_add" id="delete_AD" @click="delete_AD_hint()">刪除</div>
+              <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
+              <div class="ad_tool_add" id="" @click="re_read_AD()">匯出</div>
+              <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
+            </div>
+            <!-- <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
             <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
             <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
             <el-button type="danger" id="" @click="re_read_AD()">生成全部語音</el-button>
-            <el-button type="danger" id="" @click="router.push('/outputPreview')">去output</el-button>
+            <el-button type="danger" id="" @click="router.push('/outputPreview')">去output</el-button> -->
           </div>
         </div>
         <div class="left_container">
         </div>
       </div>
       <div class="top__middle">
-        <video controls >
+        <video controls>
           <source id="video" src="" type="video/mp4">
           Your browser does not support the video tag.
         </video>
@@ -485,8 +494,8 @@ function re_read_AD() {
           </div>
           <div class="ad_tool">
             <div class="Tool">
-              <div class="ad_tool_add" @click="Store_AD">Gemini</div>
-              <div class="ad_tool_add">試聽</div>
+              <div class="ad_tool_add" @click="">Gemini</div>
+              <div class="ad_tool_add" @click="read_AD">試聽</div>
             </div>
             <!-- <div class = "Tool">
               <div class="ad_tool_add" @click="Store_AD">要新增</div>
@@ -494,7 +503,7 @@ function re_read_AD() {
             </div> -->
             <div class="Tool">
               <div class="ad_tool_add"
-                @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
+                @click="">
                 刪除</div>
               <div class="ad_tool_add" @click="save_AD">儲存</div>
             </div>
@@ -538,9 +547,10 @@ function re_read_AD() {
         <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
 
       </div>  -->
-      <img src="../picture/sound-8825_512.gif" width="1500px"height="100px"   alt="Description of the GIF">
+      <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
 
-      <button class="right_arrow" @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
+      <button class="right_arrow"
+        @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
         <el-icon :size="30" height="100" color="#ffffff">
           <ArrowRight />
         </el-icon>
