@@ -188,8 +188,18 @@ app.whenReady().then(() => {
   // const path = require('path');
   const ffmpeg = require('fluent-ffmpeg');
 
-  ipcMain.on('mergeAudioToVideo', async (event, videoPath, audioPath, outputPath, scene_output_video) => {
-    finally_video();
+  ipcMain.on('mergeAudioToVideo', async (event) => {
+    try {
+      const result = await call_readEXE_recursive();
+      if (result) {
+        finally_video();
+        event.reply('mergeAudioToVideo-reply', true);
+      } else {
+        console.error('Error: Not all EXE calls completed successfully.');
+      }
+    } catch (error) {
+      console.error('Error in mergeAudioToVideo:', error);
+    }
   });
 
   app.on('activate', function () {
@@ -336,7 +346,7 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice) => {
+  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice,time1,time2,tim3) => {
     // console.log('save_AD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
@@ -349,7 +359,9 @@ app.whenReady().then(() => {
       // console.log('textareaValue_value:', textareaValue_value);
       // console.log('NOW_Ad_Choice:', NOW_Ad_Choice);
       jsonData[NOW_select_AD_name_value]["AD-content"][NOW_Ad_Choice] = textareaValue_value;
-
+      jsonData[NOW_select_AD_name_value]["scene-start-time"] = time1;
+      jsonData[NOW_select_AD_name_value]["scene-end-time"] = time2;
+      jsonData[NOW_select_AD_name_value]["AD-start-time"] = tim3;
       fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => { });
     });
 

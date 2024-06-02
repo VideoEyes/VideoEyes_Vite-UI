@@ -54,6 +54,14 @@ import ffmpeg from 'fluent-ffmpeg';
 function mergeAudioToVideo() {
   // console.log("mergeAudioToVideo");
   window.electron.ipcRenderer.send('mergeAudioToVideo');
+  window.electron.ipcRenderer.once('mergeAudioToVideo-reply', (event, arg) => {
+    console.log(arg); // 輸出來自主進程的回覆
+    if (arg) {
+      router.push('/outputPreview');
+    } else {
+      console.error('Error reading file:', arg.error);
+    }
+  });
 }
 
 
@@ -170,7 +178,7 @@ function save_AD() {
   } else {
     // let data = [NOW_select_AD_name.value, textareaValue.value];
     // console.log("data to be sent", data);
-    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice);
+    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice,timeSettings.value[0].value,timeSettings.value[1].value,timeSettings.value[2].value);
     window.location.reload();
   }
 
@@ -436,10 +444,10 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
-async function re_read_AD() {
-  await window.electron.ipcRenderer.send('read-All-AD');
-  mergeAudioToVideo();
-}
+// async function re_read_AD() {
+//   await window.electron.ipcRenderer.send('read-All-AD');
+//   mergeAudioToVideo();
+// }
 
 </script>
 
@@ -455,7 +463,7 @@ async function re_read_AD() {
               <div class="ad_tool_add" id="new_AD" @click="new_AD()">新增</div>
               <div class="ad_tool_add" id="delete_AD" @click="delete_AD_hint()">刪除</div>
               <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
-              <div class="ad_tool_add" id="" @click="re_read_AD()">匯出</div>
+              <div class="ad_tool_add" id="" @click="mergeAudioToVideo()">匯出</div>
               <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
             </div>
             <!-- <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
