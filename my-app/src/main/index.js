@@ -9,6 +9,8 @@ import { session } from 'electron'
 import { constants } from './constants'
 import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemini'
 import { call_readEXE,call_readEXE_recursive } from './ad_to_mp3'
+import { finally_video } from './finally_video'
+
 
 const ffmpeg = require('fluent-ffmpeg');
 const { dialog } = require('electron')
@@ -155,52 +157,7 @@ app.whenReady().then(() => {
   const ffmpeg = require('fluent-ffmpeg');
 
   ipcMain.on('mergeAudioToVideo', async (event, videoPath, audioPath, outputPath, scene_output_video) => {
-    console.log('合并开始！', videoPath, audioPath, outputPath, scene_output_video);
-    var delay = "";
-    fs.readFile(output_json, 'utf8', (err, data) => {
-      if (err) {
-        console.error('ERROR:', err);
-        return;
-      }
-      const jsonData = JSON.parse(data);
-      delay = jsonData[scene_output_video]["scene-start-time"];
-      console.log('delayAA:', delay);
-
-      var parts = delay.split(':');
-      const hours = parseInt(parts[0], 10);
-      const minutes = parseInt(parts[1], 10);
-      const seconds = parseFloat(parts[2]);
-      var now_time = 0;
-      now_time = parseInt((hours * 60 * 60) + (minutes * 60) + seconds * 1000);
-      console.log('delay:', now_time);
-      return new Promise((resolve, reject) => {
-        ffmpeg()
-          .input(videoPath)
-          .input(audioPath)
-          .complexFilter(
-            `[1:a]adelay=${now_time}|${now_time}[delayed]; [0:a][delayed]amix=inputs=2:duration=first[a]`
-          )
-          .outputOptions('-map 0:v')
-          .outputOptions('-map [a]')
-          .outputOptions('-c:v copy')
-          .outputOptions('-c:a aac')
-          .outputOptions('-shortest')
-          .output(outputPath)
-          .on('start', commandLine => console.log(`Spawned Ffmpeg with command: ${commandLine}`))
-          .on('error', (err, stdout, stderr) => {
-            console.error('Error:', err);
-            console.error('ffmpeg stdout:', stdout);
-            console.error('ffmpeg stderr:', stderr);
-            reject(err);
-          })
-          .on('end', () => {
-            console.log('Finished processing');
-            resolve();
-          })
-          .run();
-      });
-    });
-
+    finally_video();
   });
 
   app.on('activate', function () {
@@ -398,7 +355,7 @@ app.whenReady().then(() => {
     gemini_process_all(output_json, event);
   });
 
-  ipcMain.on('read-AD', async (event, arg,choice,theName) => {
+  ipcMain.on('read-AD', async (event, arg, choice, theName) => {
     // console.log("arg", arg, choice,theName);
     call_readEXE(arg,choice,theName)
   });
