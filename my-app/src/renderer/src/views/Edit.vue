@@ -197,7 +197,17 @@ function Store_AD() {
   let last_ID = MAN_index + 1;
   // last_ID = parseInt(last_ID.replace(/[^0-9]/g, "")) + 1;
   // last_ID = "AD" + last_ID;
-  let LAST = "AD" + String(last_ID);
+  let get_last_ID = 0;
+  while (last_ID > 0) {
+    get_last_ID++;
+    last_ID /= 10;
+  }
+  let LAST = "";
+  if (get_last_ID == 1) {
+    LAST = "AD00" + String(last_ID);
+  } else if (get_last_ID == 2) {
+    LAST = "AD0" + String(last_ID);
+  }
   console.log("LAST", LAST);
   let data = {
     [LAST]: {
@@ -442,7 +452,7 @@ async function re_read_AD() {
         <div class="left_title">
           <div class="edit-button">
             <div class="ATool">
-              <div class="ad_tool_add"  id="new_AD" @click="new_AD()">新增</div>
+              <div class="ad_tool_add" id="new_AD" @click="new_AD()">新增</div>
               <div class="ad_tool_add" id="delete_AD" @click="delete_AD_hint()">刪除</div>
               <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
               <div class="ad_tool_add" id="" @click="re_read_AD()">匯出</div>
@@ -502,8 +512,7 @@ async function re_read_AD() {
               <div class="ad_tool_add">要刪除</div>
             </div> -->
             <div class="Tool">
-              <div class="ad_tool_add"
-                @click="">
+              <div class="ad_tool_add" @click="">
                 刪除</div>
               <div class="ad_tool_add" @click="save_AD">儲存</div>
             </div>
