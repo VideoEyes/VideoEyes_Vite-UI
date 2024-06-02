@@ -11,7 +11,7 @@ import { gemini_sendMultiModalPromptWithVideo, gemini_uploadFile } from './gemin
 import { gemini_1_5_sendMultiModalPromptWithVideo, gemini_1_5_uploadFile } from './AD-Gen-1.5'
 import { AD_tts } from './openai_tts'
 import { mergeAllAudioToVideo, mergeAudioToVideo } from './audio_merge'
-import { call_readEXE,call_readEXE_recursive } from './ad_to_mp3'
+import { call_readEXE, call_readEXE_recursive } from './ad_to_mp3'
 import { finally_video } from './finally_video'
 
 
@@ -127,7 +127,7 @@ app.whenReady().then(() => {
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
         const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH);
-        console.log("videoUri: "+videoUri);
+        console.log("videoUri: " + videoUri);
         const audioText = await gemini_1_5_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', videoUri);
         console.log("audioText:" + audioText);
         const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/);
@@ -148,18 +148,18 @@ app.whenReady().then(() => {
           try {
             await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
             console.log('The folder has been deleted!');
-        
+
             await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
             console.log('The folder has been created!');
           } catch (error) {
             console.error('Error clearing and creating folder:', error);
           }
         }
-        
+
         for (let i = 0; i < audioText_json.length; i++) {
           const timestamp = audioText_json[i].time;
           const text = audioText_json[i].content;
-          await AD_tts(timestamp,text, constants.AUDIO_FOLDER);  
+          await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
         }
         /*
         "AD001": {
@@ -181,7 +181,7 @@ app.whenReady().then(() => {
           //TODO: 取影片長度
           const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : "00:00:00.000";
           const text = audioText_json[i].content;
-          mainJson['AD'+ String(i+1).padStart(3,0)] = {
+          mainJson['AD' + String(i + 1).padStart(3, 0)] = {
             "scene-start-time": timestamp,
             "scene-end-time": next_timestamp,
             "AD-start-time": timestamp,
@@ -234,6 +234,17 @@ app.whenReady().then(() => {
   const ffmpeg = require('fluent-ffmpeg');
 
   ipcMain.on('mergeAudioToVideo', async (event) => {
+    if (fs.existsSync(constants.AUDIO_FOLDER)) {
+      try {
+        await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
+        console.log('The folder has been deleted!');
+
+        await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
+        console.log('The folder has been created!');
+      } catch (error) {
+        console.error('Error clearing and creating folder:', error);
+      }
+    }
     try {
       const result = await call_readEXE_recursive();
       if (result) {
@@ -391,7 +402,7 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice,time1,time2,tim3) => {
+  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice, time1, time2, tim3) => {
     // console.log('save_AD:', content);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
@@ -446,7 +457,7 @@ app.whenReady().then(() => {
 
   ipcMain.on('read-AD', async (event, arg, choice, theName) => {
     // console.log("arg", arg, choice,theName);
-    call_readEXE(arg,choice,theName)
+    call_readEXE(arg, choice, theName)
   });
 
   ipcMain.on('read-All-AD', async (event) => {
