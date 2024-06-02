@@ -6,6 +6,11 @@ import ffmpeg from 'fluent-ffmpeg';
 export async function finally_video( speechesFolderPath, outputPath) {
     const audioFiles = fs.readdirSync(constants.AUDIO_FOLDER).filter(file => file.endsWith('.mp3'));
 
+    //check dir existing
+    if (!fs.existsSync(constants.OUTPUT_VIDEO_FOLDER)) {
+        fs.mkdirSync(constants.OUTPUT_VIDEO_FOLDER, { recursive: true });
+    }
+
     // Prepare inputs and filters for ffmpeg
     const inputs = [];
     const filters = [];
@@ -71,7 +76,7 @@ export async function finally_video( speechesFolderPath, outputPath) {
             .outputOptions('-c:v copy')
             .outputOptions('-c:a aac')
             .outputOptions('-shortest')
-            .output(constants.FINALLY_FOLDER + "\\finally.mp4")
+            .output(constants.OUTPUT_VIDEO_FOLDER + "\\output.mp4")
             .on('start', commandLine => console.log(`Spawned Ffmpeg with command: ${commandLine}`))
             .on('error', (err, stdout, stderr) => {
                 console.error('Error:', err);

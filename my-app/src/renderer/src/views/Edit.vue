@@ -12,6 +12,14 @@ import path from 'node:path'
 import router from '../router';
 import Swal from 'sweetalert2';
 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Delete,
+  Edit,
+  Share,
+} from '@element-plus/icons-vue'
+
 var nowSelectedAD = null; //現在選擇的AD，全域變數(待修改)
 var nowSelectedADIndex = null; //現在選擇的AD，全域變數(待修改)
 import { watch } from 'vue';
@@ -43,9 +51,9 @@ onMounted(() => {
 // const ffmpeg = require('fluent-ffmpeg');
 import ffmpeg from 'fluent-ffmpeg';
 
-function mergeAudioToVideo(videoPath, audioPath, outputPath,scene_output_video) {
-  console.log("mergeAudioToVideo", videoPath, audioPath, outputPath,scene_output_video);
-  window.electron.ipcRenderer.send('mergeAudioToVideo', videoPath, audioPath, outputPath,scene_output_video);
+function mergeAudioToVideo() {
+  // console.log("mergeAudioToVideo");
+  window.electron.ipcRenderer.send('mergeAudioToVideo');
 }
 
 
@@ -258,7 +266,7 @@ let nowAdChoice = -1;
 const toggleWindow = (window) => {
   nowAdChoice = window.number - 1;
   change_AD_choice(window.number);
-  nowAdChoice = window.number;
+  // nowAdChoice = window.number;
   // console.log('toggleWindow', window.number);
   for (let i = 0; i < windows.value.length; i++) {
     windows.value[i].color = 'rgb(255,255,255)'
@@ -478,7 +486,7 @@ function re_read_AD(){
           <div class="ad_tool">
             <div class="ad_tool_add" @click="Store_AD">要新增</div>
             <div class="ad_tool_add">要刪除</div>
-            <div class="ad_tool_add" @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4','D:\\Download\\TESTT.mp3','D:\\Download\\AAAA.mp4',scene_output_video)">輸出檔案</div>
+            <div class="ad_tool_add" @click="mergeAudioToVideo()">輸出檔案</div>
             <div class="ad_tool_add" @click="save_AD">存檔口述影像</div>
           </div>
         </div>
@@ -500,8 +508,11 @@ function re_read_AD(){
     </div>
 
     <div class="down" id="ALL">
-      <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">123456</button>
-
+      <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
+        <el-icon :size="30" height="100" color="#ffffff">
+          <ArrowLeft />
+        </el-icon>
+      </button>
       <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"
           :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
@@ -513,8 +524,11 @@ function re_read_AD(){
       </div>
 
 
-      <button class="right_arrow"
-        @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">123456</button>
+      <button class="right_arrow" @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
+        <el-icon :size="30" height="100" color="#ffffff">
+          <ArrowRight />
+        </el-icon>
+      </button>
       <!-- 不足60 取整數 -->
     </div>
   </div>

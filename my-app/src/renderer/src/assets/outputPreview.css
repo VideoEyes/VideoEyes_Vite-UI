@@ -19,7 +19,7 @@
     /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
 
-.header img {
+.title-button {
     position: absolute;
     left: 10px;
     height: 25px;
@@ -35,8 +35,8 @@
 }
 
 .video-container {
-    width: 100%;
-    max-height: 90%;
+    width: 80%;
+    /* max-height: 80%; */
     aspect-ratio: 16 / 9; /* This ensures the video maintains a 16:9 aspect ratio */
     overflow: hidden;
     background-color: black; /* To avoid white bars on sides */
