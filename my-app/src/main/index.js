@@ -199,9 +199,11 @@ app.whenReady().then(() => {
         });
 
         await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
+        event.reply('generate-reply', true);
       }
     })
   })
+
 
   // return video file path
   // 影片檔案名稱: video.mp4

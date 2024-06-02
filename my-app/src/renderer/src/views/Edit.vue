@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 import {
   ArrowLeft,
   ArrowRight,
+  StarFilled ,
   Delete,
   Edit,
   Share,
@@ -178,7 +179,7 @@ function save_AD() {
   } else {
     // let data = [NOW_select_AD_name.value, textareaValue.value];
     // console.log("data to be sent", data);
-    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice,timeSettings.value[0].value,timeSettings.value[1].value,timeSettings.value[2].value);
+    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice, timeSettings.value[0].value, timeSettings.value[1].value, timeSettings.value[2].value);
     window.location.reload();
   }
 
@@ -543,8 +544,14 @@ function getShowTimeBar(ttvalue) {
           :style="{ left: `${value}%` }">
           <div class="time_bar__line__time__line"></div>
           <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
-          <img @click="get_ad_information(index, ttvalue)" src="../picture/ask.png" class="time_bar__line__time__img"
-            alt="">
+          <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
+            <el-icon :size="25">
+              <StarFilled  />
+            </el-icon>
+          </div>
+
+          <!-- <img @click="get_ad_information(index, ttvalue)" src="../picture/map.png" class="time_bar__line__time__img"
+            alt=""> -->
         </div>
       </div>
     </div>
