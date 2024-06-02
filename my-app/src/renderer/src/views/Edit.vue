@@ -435,6 +435,7 @@ function re_read_AD(){
             <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
             <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
             <el-button type="danger" id="" @click="re_read_AD()">生成全部語音</el-button>
+            <el-button type="danger" id="" @click="router.push('/outputPreview')">去output</el-button>
           </div>
         </div>
         <div class="left_container">

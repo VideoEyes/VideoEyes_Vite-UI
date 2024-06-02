@@ -135,6 +135,13 @@ app.whenReady().then(() => {
     event.returnValue = output_file
   })
 
+  ipcMain.on('get-output-video-path', async (event, arg) => {
+    //const USER_DATA_PATH = app.getPath('userData')
+    const output = path.join(PROJECT_PATH, 'video')
+    const output_file = path.join(output, "video.mp4")
+    event.returnValue = output_file
+  })
+
   //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
   ipcMain.on('start_PySceneDetect', async (event, arg) => {
     call_pySceneDetect(event)
