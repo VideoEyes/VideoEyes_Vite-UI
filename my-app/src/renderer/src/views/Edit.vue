@@ -529,7 +529,7 @@ function re_read_AD() {
           <ArrowLeft />
         </el-icon>
       </button>
-      <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
+      <!-- <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
         <div class="hover-info"
           :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
           X: {{ mousePosition.x.toFixed(2) }}%
@@ -537,7 +537,7 @@ function re_read_AD() {
         {{ now_video_time }}
         <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
 
-      </div> -->
+      </div>  -->
       <img src="../picture/sound-8825_512.gif" width="1500px"height="100px"   alt="Description of the GIF">
 
       <button class="right_arrow" @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
