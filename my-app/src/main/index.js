@@ -144,6 +144,8 @@ app.whenReady().then(() => {
           const timestamp = audioText_json[i].time;
           const text = audioText_json[i].content;
           try {
+            // 清空 audio 資料夾
+            fs.rmdirSync(constants.AUDIO_FOLDER, { recursive: true });
             await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
           } catch (error) {
             console.error('Error:', error);
@@ -159,7 +161,6 @@ app.whenReady().then(() => {
                 "455454",
                 "877",
                 "999",
-                "9999"
             ],
             "AD-content-ID": 0
         },
