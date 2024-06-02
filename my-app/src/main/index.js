@@ -16,12 +16,12 @@ import { finally_video } from './finally_video'
 
 
 const ffmpeg = require('fluent-ffmpeg');
-const { dialog } = require('electron')
-const fs = require('fs')
-const path = require('path')
-const { exec } = require('child_process')
-const USER_DATA_PATH = app.getPath('userData')
-const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+const { dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const USER_DATA_PATH = app.getPath('userData');
+const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name');
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
 const { VertexAI } = require('@google-cloud/vertexai');
 // var ffmpeg = require('fluent-ffmpeg');

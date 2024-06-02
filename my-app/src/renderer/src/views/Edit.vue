@@ -123,15 +123,15 @@ const Toast_delete = Swal.mixin({
   }
 });
 
-function read_AD(){
-  if(nowSelectedAD == null){
+function read_AD() {
+  if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
       title: "請選擇要生成語音的口述影像",
     });
     return;
   }
-  window.electron.ipcRenderer.send('read-AD',KEY_main_json.value[nowSelectedAD],nowAdChoice,sceneStart[KEY_main_json.value[nowSelectedAD]]);
+  window.electron.ipcRenderer.send('read-AD', KEY_main_json.value[nowSelectedAD], nowAdChoice, sceneStart[KEY_main_json.value[nowSelectedAD]]);
 }
 
 function new_AD() {
@@ -169,7 +169,7 @@ function save_AD() {
   } else {
     // let data = [NOW_select_AD_name.value, textareaValue.value];
     // console.log("data to be sent", data);
-    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex,textareaValue.value,nowAdChoice);
+    window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice);
     window.location.reload();
   }
 
@@ -425,7 +425,7 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
-function re_read_AD(){
+function re_read_AD() {
   window.electron.ipcRenderer.send('read-All-AD');
 }
 
@@ -484,10 +484,16 @@ function re_read_AD(){
             </form>
           </div>
           <div class="ad_tool">
-            <div class="ad_tool_add" @click="Store_AD">要新增</div>
-            <div class="ad_tool_add">要刪除</div>
-            <div class="ad_tool_add" @click="mergeAudioToVideo()">輸出檔案</div>
-            <div class="ad_tool_add" @click="save_AD">存檔口述影像</div>
+            <div class = "Tool">
+              <div class="ad_tool_add" @click="Store_AD">要新增</div>
+              <div class="ad_tool_add">要刪除</div>
+            </div>
+            <div class = "Tool">
+              <div class="ad_tool_add"
+                @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
+                輸出檔案</div>
+              <div class="ad_tool_add" @click="save_AD">存檔口述</div>
+            </div>
           </div>
         </div>
       </div>
