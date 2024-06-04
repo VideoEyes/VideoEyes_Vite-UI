@@ -551,7 +551,7 @@ async function gemini_process_all(AD_json, event) {
       jsonData[key]["AD-content"][0] = response;
       console.log('key:', key, 'response:', response);
       // 暫停1分鐘
-      await new Promise(resolve => setTimeout(resolve, 20000));
+      await new Promise(resolve => setTimeout(resolve, 35000));
     }
     console.log('jsonData:', jsonData);
     fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
