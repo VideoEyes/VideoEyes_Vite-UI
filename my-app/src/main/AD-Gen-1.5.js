@@ -6,7 +6,15 @@ const vertexAI = new VertexAI({ project: 'gemini-rain-py', location: 'us-central
 const storage = new Storage({ projectId: 'gemini-rain-py' });
 const bucketName = 'gemini-ad-gen';
 
-export async function gemini_1_5_sendMultiModalPromptWithVideo(projectId, location, model, uri) {
+export async function gemini_1_5_sendMultiModalPromptWithVideo(projectId, location, model, uri, prompt = `創建一個簡短的口述影像腳本並包含時間點(精確至毫秒)。儘量貼近原作品再現的原則。無須描述對話。以下方josn格式回覆": \
+                            { \
+                                \"time\": \"00:01:02.020\", \
+                                \"content\": \"這是一個簡短的口述影像腳本\", \
+                            }`, systemInstruction = `你是專業的口述影像搞生成器，以下方josn格式回覆: \
+                            { \
+                                \"time\": \"00:01:02.020\", \
+                                \"content\": \"這是一個簡短的口述影像腳本\", \
+                            }`) { 
     try {
         const generativeVisionModel = await vertexAI.getGenerativeModel({
             model: model,
@@ -24,11 +32,7 @@ export async function gemini_1_5_sendMultiModalPromptWithVideo(projectId, locati
                             },
                         },
                         {
-                            text: `創建一個簡短的口述影像腳本並包含時間點(精確至毫秒)。儘量貼近原作品再現的原則。無須描述對話。以下方josn格式回覆": \
-                            { \
-                                \"time\": \"00:01:02.020\", \
-                                \"content\": \"這是一個簡短的口述影像腳本\", \
-                            }`
+                            text: prompt,
                             //創建一個簡短的口述影像腳本並包含時間點(精確至毫秒)。儘量貼近原作品再現的原則。無須描述對話。
                             //這是一個簡短的口述影像腳本
                         },
@@ -42,11 +46,7 @@ export async function gemini_1_5_sendMultiModalPromptWithVideo(projectId, locati
             },
             systemInstruction: {
                 //你是專業的口述影像搞生成器
-                parts: [{ "text": `你是專業的口述影像搞生成器，以下方josn格式回覆: \
-                { \
-                    \"time\": \"00:01:02.020\", \
-                    \"content\": \"這是一個簡短的口述影像腳本\", \
-                }` }]
+                parts: [{ "text":  systemInstruction}]
             },
 
         };
@@ -67,7 +67,8 @@ export async function gemini_1_5_uploadFile(destFileName, filePath) {
     try {
         const options = { destination: destFileName };
         await storage.bucket(bucketName).upload(filePath, options);
-        return `gs://${bucketName}/${destFileName}`;
+        return Promise.resolve(`gs://${bucketName}/${destFileName}`);
+        //return `gs://${bucketName}/${destFileName}`;
     } catch (err) {
         console.error(err);
     }

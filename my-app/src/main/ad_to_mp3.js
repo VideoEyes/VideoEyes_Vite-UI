@@ -6,6 +6,7 @@ const util = require('util');
 const execPromise = util.promisify(exec);
 import readFromJsonEXE from '../../resources/readFromJson.exe?asset&asarUnpack'
 import saveMP3FromJsonEXE from '../../resources/saveMP3FromJson.exe?asset&asarUnpack'
+import { AD_tts } from './openai_tts'
 
 
 export async function call_readEXE(ADname,choice,theName,mode=0) {
@@ -36,49 +37,8 @@ export async function call_readEXE(ADname,choice,theName,mode=0) {
     console.error(`error: ${error}`);
     return 0;
   }
-  // exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
-  //   if (error) {
-  //     console.error(`error: ${error}`);
-  //     return;
-  //   }
-  //   // console.log(stdout);
-  //   if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
-  //     console.log('exe Done');
-  //     return 1;
-  //     // event.reply('readFromJson', "Success")
-  //   } else {
-  //     console.log('exe error');
-  //     return 0;
-  //     // event.reply('readFromJson', "Fail")
-  //   }
-  // });
 };
 
-// export async function call_readEXE_recursive() {
-//   fs.readFile(constants.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
-//     if (err) {
-//       console.error('ERROR:', err);
-//       return;
-//     }
-//     let sum = 0;
-//     const jsonData = JSON.parse(data);
-//     const jsonDataArray = Object.values(jsonData);
-//     const jsonDataIndex = Object.keys(jsonData);
-//     //
-//     for (let i = 0; i < jsonDataIndex.length; i++) {
-//       const ADname = jsonDataIndex[i];
-//       const ADChoice = jsonDataArray[i]["AD-content-ID"];
-//       let output_name =jsonDataArray[i]["scene-start-time"]+".mp3";
-//       output_name = output_name.replace(/:/g, "_");
-//       sum += call_readEXE(ADname, ADChoice,output_name,1);
-//     }
-//     if (sum === jsonDataIndex.length) {
-//       return true
-//     }else{
-//       return false
-//     }
-//   });
-// }
 
 export async function call_readEXE_recursive() {
   try {
@@ -92,13 +52,26 @@ export async function call_readEXE_recursive() {
       const ADname = jsonDataIndex[i];
       const ADChoice = jsonDataArray[i]["AD-content-ID"];
       const output_name = jsonDataArray[i]["scene-start-time"].replace(/:/g, "_");
-
-      sum += await call_readEXE(ADname, ADChoice, output_name, 1);
+      const content = jsonDataArray[i]["AD-content"][ADChoice];
+      if(constants.TTS_Type === 'python')
+        sum += await call_readEXE(ADname, ADChoice, output_name, 1);
+      else if(constants.TTS_Type === 'openai')
+        sum += await call_openai_tts(content, constants.AUDIO_FOLDER, output_name);
     }
 
     return sum === jsonDataIndex.length;
   } catch (err) {
     console.error('ERROR:', err);
     return false;
+  }
+}
+
+export async function call_openai_tts(text, output_folder, timestamp) {
+  try {
+    await AD_tts(timestamp, text, output_folder);
+    return 1;
+  } catch (err) {
+    console.error('ERROR:', err);
+    return 0;
   }
 }

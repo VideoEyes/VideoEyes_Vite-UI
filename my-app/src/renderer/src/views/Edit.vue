@@ -143,6 +143,25 @@ function read_AD() {
   window.electron.ipcRenderer.send('read-AD', KEY_main_json.value[nowSelectedAD], nowAdChoice, sceneStart[KEY_main_json.value[nowSelectedAD]]);
 }
 
+function regen_AD() {
+  if (nowSelectedAD == null) {
+    Swal.fire({
+      icon: "error",
+      title: "請選擇要生成語音的口述影像",
+    });
+    return;
+  }
+  // "scene-start-time": timeSettings.value[0].value,
+  // "scene-end-time": timeSettings.value[1].value,
+  // "AD-start-time": timeSettings.value[2].value,
+  window.electron.ipcRenderer.send('regen-AD', KEY_main_json.value[nowSelectedAD], timeSettings.value[0].value, timeSettings.value[1].value, timeSettings.value[2].value);
+  window.electron.ipcRenderer.once('regen-AD-reply', (event, arg) => {
+    console.log(arg); // 輸出來自主進程的回覆
+    textareaValue.value = arg;
+    save_AD();
+  });
+}
+
 function new_AD() {
   // console.log('write-file');
   Store_AD();
@@ -374,7 +393,7 @@ function get_ad_information(index, ttvalue) {
           showCancelButton: false,
           confirmButtonColor: "#3085d6",
           cancelButtonColor: "#d33",
-          confirmButtonText: "對拉!! 媽的快點刪除",
+          confirmButtonText: "確認刪除",
           showDenyButton: true,
           denyButtonText: "取消刪除",
           showDenyButton: true,
@@ -513,7 +532,7 @@ function getShowTimeBar(ttvalue) {
           </div>
           <div class="ad_tool">
             <div class="Tool">
-              <div class="ad_tool_add" @click="">Gemini</div>
+              <div class="ad_tool_add" @click="regen_AD">Gemini</div>
               <div class="ad_tool_add" @click="read_AD">試聽</div>
             </div>
             <!-- <div class = "Tool">

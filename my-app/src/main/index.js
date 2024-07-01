@@ -460,11 +460,57 @@ app.whenReady().then(() => {
     call_readEXE(arg, choice, theName)
   });
 
+  const path = require('path');
+  const { exec } = require('child_process');
+  
+  ipcMain.on('regen-AD', async (event, name, start, end, timestamp) => {
+      const input = path.join(PROJECT_PATH, 'video/video.mp4');
+      const output = path.join(PROJECT_PATH, 'video', `${name}.mp4`);
+      const cmd = `"${video_cutEXE}" "${input}" "${output}" "${start}" "${end}"`;
+      
+      console.log('cmd:', cmd);
+      
+      exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+          if (error) {
+              console.error('exec error:', error);
+              event.reply('regen-AD-reply', 'Fail');
+              return;
+          }
+  
+          if (stdout.trim().replace(/\r?\n/g, '') === 'Done') {
+              console.log('exe Done');
+              gemini_with_scene(name, output).then((response) => {
+                  console.log('response:', response);
+                  event.reply('regen-AD-reply', response);
+              });
+          } else {
+              console.log('exe error:', stderr);
+              event.reply('regen-AD-reply', 'Fail');
+          }
+      });
+  });
+
+  
+  
+
   ipcMain.on('read-All-AD', async (event) => {
     call_readEXE_recursive()
   });
 })
 
+async function gemini_with_scene(name, videoPath) {
+  let uri = await gemini_1_5_uploadFile(`${name}.mp4`, videoPath);
+  console.log('uri:', uri);
+
+  return await gemini_1_5_sendMultiModalPromptWithVideo(
+    'gemini-rain-py',
+    'us-central1',
+    constants.GEMINI_MODEL,
+    uri,
+    '創建一個簡短的口述影像描述。儘量貼近原作品再現的原則。無須描述對話。',
+    '你是專業的口述影像搞生成器，以旁白角度轉寫講稿，不要使用畫面中等詞彙'
+  );
+}
 
 function call_pySceneDetect(event) {
   console.log(mainEXE)

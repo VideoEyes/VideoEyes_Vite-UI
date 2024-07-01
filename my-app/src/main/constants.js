@@ -12,6 +12,7 @@ const OUTPUT_VIDEO_FOLDER = path.join(PROJECT_PATH, 'output_video');
 const OUTPUT_VIDEO_PATH = path.join(OUTPUT_VIDEO_FOLDER, 'output.mp4');
 const FINALLY_FOLDER = path.join(PROJECT_PATH, 'finally');
 const GEMINI_MODEL = 'gemini-1.5-pro-preview-0514';
+const TTS_Type = 'openai'; // or 'python'
 // const AUDIO_FOLDER = path.join(PROJECT_PATH, 'audio');
 
 export const constants = {
@@ -25,5 +26,6 @@ export const constants = {
   OUTPUT_VIDEO_PATH: OUTPUT_VIDEO_PATH,
   VIDEO_PATH: VIDEO_PATH,
   AUDIO_FOLDER: AUDIO_FOLDER,
-  FINALLY_FOLDER: FINALLY_FOLDER
+  FINALLY_FOLDER: FINALLY_FOLDER,
+  TTS_Type: TTS_Type
 };
