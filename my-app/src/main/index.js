@@ -4,6 +4,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
+import mainPy from '../../resources/main.py?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
@@ -14,18 +15,16 @@ import { mergeAllAudioToVideo, mergeAudioToVideo } from './audio_merge'
 import { call_readEXE, call_readEXE_recursive } from './ad_to_mp3'
 import { finally_video } from './finally_video'
 
-
-const ffmpeg = require('fluent-ffmpeg');
-const { dialog } = require('electron');
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const USER_DATA_PATH = app.getPath('userData');
-const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name');
-const output_json = path.join(PROJECT_PATH, 'json/main.json');
-const { VertexAI } = require('@google-cloud/vertexai');
+const ffmpeg = require('fluent-ffmpeg')
+const { dialog } = require('electron')
+const fs = require('fs')
+const path = require('path')
+const { exec } = require('child_process')
+const USER_DATA_PATH = app.getPath('userData')
+const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
+const output_json = path.join(PROJECT_PATH, 'json/main.json')
+const { VertexAI } = require('@google-cloud/vertexai')
 // var ffmpeg = require('fluent-ffmpeg');
-
 
 // 主進程
 function createWindow() {
@@ -72,7 +71,7 @@ function createWindow() {
     //   console.log('File successfully written!');
     // });
     mainWindow.close()
-  });
+  })
 }
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -90,7 +89,6 @@ app.whenReady().then(() => {
 
   //////////////
 
-
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
@@ -98,9 +96,7 @@ app.whenReady().then(() => {
   ipcMain.on('file', async (event, arg) => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [
-        { name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }
-      ]
+      filters: [{ name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }]
     })
 
     if (result.filePaths.length === 0) {
@@ -119,47 +115,52 @@ app.whenReady().then(() => {
       fs.mkdirSync(output)
     }
     //rename video file
-    const output_file = path.join(output, "video.mp4")
+    const output_file = path.join(output, 'video.mp4')
     fs.copyFile(input, output_file, async (err) => {
       if (err) throw err
       else if (arg === 'open') {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
-        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH);
-        console.log("videoUri: " + videoUri);
-        const audioText = await gemini_1_5_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', videoUri);
-        console.log("audioText:" + audioText);
-        const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/);
-        let audioText_json = [];
+        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH)
+        console.log('videoUri: ' + videoUri)
+        const audioText = await gemini_1_5_sendMultiModalPromptWithVideo(
+          'gemini-rain-py',
+          'us-central1',
+          'gemini-1.5-flash-preview-0514',
+          videoUri
+        )
+        console.log('audioText:' + audioText)
+        const jsonMatch = audioText.match(/```json\s*([\s\S]*?)\s*```/)
+        let audioText_json = []
         // 確保匹配到了 JSON 部分
         if (jsonMatch && jsonMatch[1]) {
-          const jsonString = jsonMatch[1];
+          const jsonString = jsonMatch[1]
           try {
-            audioText_json = JSON.parse(jsonString);
-            console.log(audioText_json);
+            audioText_json = JSON.parse(jsonString)
+            console.log(audioText_json)
           } catch (error) {
-            console.error('Error parsing JSON:', error);
+            console.error('Error parsing JSON:', error)
           }
         } else {
-          console.error('No JSON found in the text.');
+          console.error('No JSON found in the text.')
         }
         if (fs.existsSync(constants.AUDIO_FOLDER)) {
           try {
-            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
-            console.log('The folder has been deleted!');
+            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+            console.log('The folder has been deleted!')
 
-            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
-            console.log('The folder has been created!');
+            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+            console.log('The folder has been created!')
           } catch (error) {
-            console.error('Error clearing and creating folder:', error);
+            console.error('Error clearing and creating folder:', error)
           }
         }
 
         for (let i = 0; i < audioText_json.length; i++) {
-          const timestamp = audioText_json[i].time;
-          const text = audioText_json[i].content;
-          await AD_tts(timestamp, text, constants.AUDIO_FOLDER);
+          const timestamp = audioText_json[i].time
+          const text = audioText_json[i].content
+          await AD_tts(timestamp, text, constants.AUDIO_FOLDER)
         }
         /*
         "AD001": {
@@ -175,35 +176,38 @@ app.whenReady().then(() => {
             "AD-content-ID": 0
         },
         */
-        let mainJson = {};
+        let mainJson = {}
         for (let i = 0; i < audioText_json.length; i++) {
-          const timestamp = audioText_json[i].time;
+          const timestamp = audioText_json[i].time
           //TODO: 取影片長度
-          const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : "00:00:00.000";
-          const text = audioText_json[i].content;
+          const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : '00:00:00.000'
+          const text = audioText_json[i].content
           mainJson['AD' + String(i + 1).padStart(3, 0)] = {
-            "scene-start-time": timestamp,
-            "scene-end-time": next_timestamp,
-            "AD-start-time": timestamp,
-            "AD-content": [text, '', '', ''],
-            "AD-content-ID": 0
-          };
+            'scene-start-time': timestamp,
+            'scene-end-time': next_timestamp,
+            'AD-start-time': timestamp,
+            'AD-content': [text, '', '', ''],
+            'AD-content-ID': 0
+          }
         }
-        console.log('mainJson:', mainJson);
+        console.log('mainJson:', mainJson)
         fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
           if (err) {
-            console.error('ERROR:', err);
-            return;
+            console.error('ERROR:', err)
+            return
           }
-          console.log('The file has been saved!');
-        });
+          console.log('The file has been saved!')
+        })
 
-        await mergeAllAudioToVideo(constants.VIDEO_PATH, constants.AUDIO_FOLDER, constants.OUTPUT_VIDEO_FOLDER);
-        event.reply('generate-reply', true);
+        await mergeAllAudioToVideo(
+          constants.VIDEO_PATH,
+          constants.AUDIO_FOLDER,
+          constants.OUTPUT_VIDEO_FOLDER
+        )
+        event.reply('generate-reply', true)
       }
     })
   })
-
 
   // return video file path
   // 影片檔案名稱: video.mp4
@@ -212,7 +216,7 @@ app.whenReady().then(() => {
   ipcMain.on('get-video-path', async (event, arg) => {
     //const USER_DATA_PATH = app.getPath('userData')
     const output = path.join(PROJECT_PATH, 'video')
-    const output_file = path.join(output, "video.mp4")
+    const output_file = path.join(output, 'video.mp4')
     event.returnValue = output_file
   })
 
@@ -231,32 +235,32 @@ app.whenReady().then(() => {
 
   // const fs = require('fs');
   // const path = require('path');
-  const ffmpeg = require('fluent-ffmpeg');
+  const ffmpeg = require('fluent-ffmpeg')
 
   ipcMain.on('mergeAudioToVideo', async (event) => {
     if (fs.existsSync(constants.AUDIO_FOLDER)) {
       try {
-        await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true });
-        console.log('The folder has been deleted!');
+        await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+        console.log('The folder has been deleted!')
 
-        await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true });
-        console.log('The folder has been created!');
+        await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+        console.log('The folder has been created!')
       } catch (error) {
-        console.error('Error clearing and creating folder:', error);
+        console.error('Error clearing and creating folder:', error)
       }
     }
     try {
-      const result = await call_readEXE_recursive();
+      const result = await call_readEXE_recursive()
       if (result) {
-        await finally_video();
-        event.reply('mergeAudioToVideo-reply', true);
+        await finally_video()
+        event.reply('mergeAudioToVideo-reply', true)
       } else {
-        console.error('Error: Not all EXE calls completed successfully.');
+        console.error('Error: Not all EXE calls completed successfully.')
       }
     } catch (error) {
-      console.error('Error in mergeAudioToVideo:', error);
+      console.error('Error in mergeAudioToVideo:', error)
     }
-  });
+  })
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -265,88 +269,92 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('write-file', (event, content) => {
-    fs.readFile(output_json, "utf8", (err, data) => {
+    fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error("Error reading file:", err);
-        return;
+        console.error('Error reading file:', err)
+        return
       }
-      let jsonData;
+      let jsonData
       try {
-        jsonData = JSON.parse(data);
-        console.log("content", content);
-        console.log("jsonData", jsonData);
+        jsonData = JSON.parse(data)
+        console.log('content', content)
+        console.log('jsonData', jsonData)
       } catch (parseError) {
-        console.error("Error parsing JSON data:", parseError);
-        return;
+        console.error('Error parsing JSON data:', parseError)
+        return
       }
-      let contentObject;
+      let contentObject
 
       try {
-        contentObject = JSON.parse(content);
+        contentObject = JSON.parse(content)
       } catch (error) {
-        console.error('Parsing error:', error);
+        console.error('Parsing error:', error)
       }
       jsonData = { ...jsonData, ...contentObject }
       // console.log("jsonData", jsonData);
 
       // console.log("jsonData", jsonData);
       /////////sort json by time
-      const jsonArray = Object.entries(jsonData); // Convert json to array
-      jsonArray.sort((a, b) => { //定義排序方式
-        const timeA = a[1]['scene-start-time'];
-        const timeB = b[1]['scene-start-time'];
-        const [hourA, minA, secA, milliA] = timeA.split(/[:.]/);
-        const [hourB, minB, secB, milliB] = timeB.split(/[:.]/);
-        return (hourA - hourB) * 3600000 + (minA - minB) * 60000 + (secA - secB) * 1000 + (milliA - milliB);
-      });
+      const jsonArray = Object.entries(jsonData) // Convert json to array
+      jsonArray.sort((a, b) => {
+        //定義排序方式
+        const timeA = a[1]['scene-start-time']
+        const timeB = b[1]['scene-start-time']
+        const [hourA, minA, secA, milliA] = timeA.split(/[:.]/)
+        const [hourB, minB, secB, milliB] = timeB.split(/[:.]/)
+        return (
+          (hourA - hourB) * 3600000 +
+          (minA - minB) * 60000 +
+          (secA - secB) * 1000 +
+          (milliA - milliB)
+        )
+      })
       /////
-      const sortedJson = {}; // Convert array to json
+      const sortedJson = {} // Convert array to json
       jsonArray.forEach(([key, value]) => {
-        sortedJson[key] = value;
-      });
-      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+        sortedJson[key] = value
+      })
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4)
       //////
       // console.log("updatedJsonData", updatedJsonData);
-      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+      fs.writeFile(output_json, updatedJsonData, 'utf8', (err2) => {
         if (err2) {
-          console.error("ERROR:", err2);
-          return;
+          console.error('ERROR:', err2)
+          return
         }
-        console.log('File successfully written!');
-      });
-    });
-
-  });
-
+        console.log('File successfully written!')
+      })
+    })
+  })
 
   ipcMain.on('read-file', (event, filePath) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
-        return;
+        console.error('ERROR:', err)
+        return
       }
-      const jsonData = JSON.parse(data);
+      const jsonData = JSON.parse(data)
       // console.log('SUCCESS:', jsonData);
-      event.reply('read-file-reply', { success: true, data: jsonData });
-    });
-  });
+      event.reply('read-file-reply', { success: true, data: jsonData })
+    })
+  })
   //檢查AD選擇
   ipcMain.on('check-AD-choice', (event, now_Selected_AD) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
     // console.log("ad_index",typeof ad_index);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
-        return;
+        console.error('ERROR:', err)
+        return
       }
-      const jsonData = JSON.parse(data);
-      const jsonArray = Object.entries(jsonData);
+      const jsonData = JSON.parse(data)
+      const jsonArray = Object.entries(jsonData)
       // // console.log("jsonArray", jsonArray);
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
       // console.log("now_Selected_AD", jsonArray[now_Selected_AD][1]["AD-content-ID"]);
-      event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]["AD-content-ID"]);
-    });
-  });
+      event.reply('now_Selected_AD-reply', jsonArray[now_Selected_AD][1]['AD-content-ID'])
+    })
+  })
 
   //修改AD選擇
   ipcMain.on('change-AD-choice', (event, now_Selected_AD, ad_index) => {
@@ -354,153 +362,153 @@ app.whenReady().then(() => {
     // console.log("ad_index",typeof ad_index);
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
-        return;
+        console.error('ERROR:', err)
+        return
       }
-      const jsonData = JSON.parse(data);
-      const jsonArray = Object.entries(jsonData);
-      event.reply('change-AD-choice-reply', jsonArray[now_Selected_AD][1]["AD-content"][ad_index - 1])
+      const jsonData = JSON.parse(data)
+      const jsonArray = Object.entries(jsonData)
+      event.reply(
+        'change-AD-choice-reply',
+        jsonArray[now_Selected_AD][1]['AD-content'][ad_index - 1]
+      )
       // // console.log("jsonArray", jsonArray);
-      jsonArray[now_Selected_AD][1]["AD-content-ID"] = ad_index - 1;
+      jsonArray[now_Selected_AD][1]['AD-content-ID'] = ad_index - 1
       // console.log("now_Selected_AD",now_Selected_AD, jsonArray[now_Selected_AD]);
 
       /////
-      const sortedJson = {}; // Convert array to json
+      const sortedJson = {} // Convert array to json
       jsonArray.forEach(([key, value]) => {
-        sortedJson[key] = value;
-      });
-      const updatedJsonData = JSON.stringify(sortedJson, null, 4);
+        sortedJson[key] = value
+      })
+      const updatedJsonData = JSON.stringify(sortedJson, null, 4)
       //////
 
-      fs.writeFile(output_json, updatedJsonData, "utf8", (err2) => {
+      fs.writeFile(output_json, updatedJsonData, 'utf8', (err2) => {
         if (err2) {
-          console.error("ERROR:", err2);
-          return;
+          console.error('ERROR:', err2)
+          return
         }
         // console.log('File successfully written!');
-      });
-
-    });
-  });
+      })
+    })
+  })
 
   ipcMain.on('delete_write_file', (event, content) => {
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
-        return;
+        console.error('ERROR:', err)
+        return
       }
-      const jsonData = JSON.parse(data);
-      delete jsonData[content];
-      const jsonArray = Object.entries(jsonData);
-      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => {
+      const jsonData = JSON.parse(data)
+      delete jsonData[content]
+      const jsonArray = Object.entries(jsonData)
+      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => {
         if (err2) {
-          console.error('ERROR:', err2);
-          return;
+          console.error('ERROR:', err2)
+          return
         }
-        console.log('File successfully written!');
-      });
-    });
-  });
+        console.log('File successfully written!')
+      })
+    })
+  })
 
-  ipcMain.on('save_AD', (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice, time1, time2, tim3) => {
-    // console.log('save_AD:', content);
-    fs.readFile(output_json, 'utf8', (err, data) => {
-      if (err) {
-        console.error('ERROR:', err);
-        return;
-      }
+  ipcMain.on(
+    'save_AD',
+    (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice, time1, time2, tim3) => {
+      // console.log('save_AD:', content);
+      fs.readFile(output_json, 'utf8', (err, data) => {
+        if (err) {
+          console.error('ERROR:', err)
+          return
+        }
 
-      const jsonData = JSON.parse(data);
-      // console.log('NOW_select_AD_name_value:', NOW_select_AD_name_value);
-      // console.log('textareaValue_value:', textareaValue_value);
-      // console.log('NOW_Ad_Choice:', NOW_Ad_Choice);
-      jsonData[NOW_select_AD_name_value]["AD-content"][NOW_Ad_Choice] = textareaValue_value;
-      jsonData[NOW_select_AD_name_value]["scene-start-time"] = time1;
-      jsonData[NOW_select_AD_name_value]["scene-end-time"] = time2;
-      jsonData[NOW_select_AD_name_value]["AD-start-time"] = tim3;
-      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), "utf8", (err2) => { });
-    });
-
-  });
+        const jsonData = JSON.parse(data)
+        // console.log('NOW_select_AD_name_value:', NOW_select_AD_name_value);
+        // console.log('textareaValue_value:', textareaValue_value);
+        // console.log('NOW_Ad_Choice:', NOW_Ad_Choice);
+        jsonData[NOW_select_AD_name_value]['AD-content'][NOW_Ad_Choice] = textareaValue_value
+        jsonData[NOW_select_AD_name_value]['scene-start-time'] = time1
+        jsonData[NOW_select_AD_name_value]['scene-end-time'] = time2
+        jsonData[NOW_select_AD_name_value]['AD-start-time'] = tim3
+        fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => {})
+      })
+    }
+  )
 
   ipcMain.on('get_SceneData', (event, scene_start) => {
-    let sceneData = scene_start;
+    let sceneData = scene_start
 
     fs.readFile(output_json, 'utf8', (err, data) => {
       if (err) {
-        console.error('ERROR:', err);
-        return;
+        console.error('ERROR:', err)
+        return
       }
-      const jsonData = JSON.parse(data);
-      const jsonDataArray = Object.values(jsonData);
-      const jsonDataIndex = Object.keys(jsonData);
-      let returnData = {};
+      const jsonData = JSON.parse(data)
+      const jsonDataArray = Object.values(jsonData)
+      const jsonDataIndex = Object.keys(jsonData)
+      let returnData = {}
       for (let i = 0; i < jsonDataArray.length; i++) {
-        if (jsonDataArray[i]["scene-start-time"] == sceneData) {
-          returnData["AD-start-time"] = jsonDataArray[i]["AD-start-time"];
-          returnData["scene-end-time"] = jsonDataArray[i]["scene-end-time"];
-          returnData["scene-start-time"] = jsonDataArray[i]["scene-start-time"];
-          returnData["AD-content"] = jsonDataArray[i]["AD-content"];
-          returnData["AD-content-ID"] = jsonDataArray[i]["AD-content-ID"];
-          returnData["index"] = jsonDataIndex[i]; //為了知道index
+        if (jsonDataArray[i]['scene-start-time'] == sceneData) {
+          returnData['AD-start-time'] = jsonDataArray[i]['AD-start-time']
+          returnData['scene-end-time'] = jsonDataArray[i]['scene-end-time']
+          returnData['scene-start-time'] = jsonDataArray[i]['scene-start-time']
+          returnData['AD-content'] = jsonDataArray[i]['AD-content']
+          returnData['AD-content-ID'] = jsonDataArray[i]['AD-content-ID']
+          returnData['index'] = jsonDataIndex[i] //為了知道index
           // console.log('SUCCESS:', returnData);
-          event.reply('get_SceneData-reply', { success: true, data: returnData });
+          event.reply('get_SceneData-reply', { success: true, data: returnData })
         }
       }
-
-    });
-  });
+    })
+  })
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    gemini_process_all(output_json, event);
-  });
+    gemini_process_all(output_json, event)
+  })
 
   ipcMain.on('read-AD', async (event, arg, choice, theName) => {
     // console.log("arg", arg, choice,theName);
     call_readEXE(arg, choice, theName)
-  });
+  })
 
-  const path = require('path');
-  const { exec } = require('child_process');
-  
+  const path = require('path')
+  const { exec } = require('child_process')
+
   ipcMain.on('regen-AD', async (event, name, start, end, timestamp) => {
-      const input = path.join(PROJECT_PATH, 'video/video.mp4');
-      const output = path.join(PROJECT_PATH, 'video', `${name}.mp4`);
-      const cmd = `"${video_cutEXE}" "${input}" "${output}" "${start}" "${end}"`;
-      
-      console.log('cmd:', cmd);
-      
-      exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
-          if (error) {
-              console.error('exec error:', error);
-              event.reply('regen-AD-reply', 'Fail');
-              return;
-          }
-  
-          if (stdout.trim().replace(/\r?\n/g, '') === 'Done') {
-              console.log('exe Done');
-              gemini_with_scene(name, output).then((response) => {
-                  console.log('response:', response);
-                  event.reply('regen-AD-reply', response);
-              });
-          } else {
-              console.log('exe error:', stderr);
-              event.reply('regen-AD-reply', 'Fail');
-          }
-      });
-  });
+    const input = path.join(PROJECT_PATH, 'video/video.mp4')
+    const output = path.join(PROJECT_PATH, 'video', `${name}.mp4`)
+    const cmd = `"${video_cutEXE}" "${input}" "${output}" "${start}" "${end}"`
 
-  
-  
+    console.log('cmd:', cmd)
+
+    exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+      if (error) {
+        console.error('exec error:', error)
+        event.reply('regen-AD-reply', 'Fail')
+        return
+      }
+
+      if (stdout.trim().replace(/\r?\n/g, '') === 'Done') {
+        console.log('PSD Done')
+        gemini_with_scene(name, output).then((response) => {
+          console.log('response:', response)
+          event.reply('regen-AD-reply', response)
+        })
+      } else {
+        console.log('PSD error:', stderr)
+        event.reply('regen-AD-reply', 'Fail')
+      }
+    })
+  })
 
   ipcMain.on('read-All-AD', async (event) => {
     call_readEXE_recursive()
-  });
+  })
 })
 
 async function gemini_with_scene(name, videoPath) {
-  let uri = await gemini_1_5_uploadFile(`${name}.mp4`, videoPath);
-  console.log('uri:', uri);
+  let uri = await gemini_1_5_uploadFile(`${name}.mp4`, videoPath)
+  console.log('uri:', uri)
 
   return await gemini_1_5_sendMultiModalPromptWithVideo(
     'gemini-rain-py',
@@ -509,60 +517,55 @@ async function gemini_with_scene(name, videoPath) {
     uri,
     '創建一個簡短的口述影像描述。儘量貼近原作品再現的原則。無須描述對話。',
     '你是專業的口述影像搞生成器，以旁白角度轉寫講稿，不要使用畫面中等詞彙'
-  );
+  )
 }
 
 function call_pySceneDetect(event) {
-  console.log(mainEXE)
-  const output_json = path.join(PROJECT_PATH, 'json/main.json');
+  console.log(mainPy)
+  const output_json = path.join(PROJECT_PATH, 'json/main.json')
   // const output_image = path.join(USER_DATA_PATH, 'image');
 
-  const output_json_folder = path.dirname(output_json);
+  const output_json_folder = path.dirname(output_json)
   if (!fs.existsSync(output_json_folder)) {
-    fs.mkdirSync(output_json_folder, { recursive: true });
+    fs.mkdirSync(output_json_folder, { recursive: true })
   }
-  fs.writeFileSync(output_json, '');
+  fs.writeFileSync(output_json, '')
   // if (!fs.existsSync(output_image)) {
   //   fs.mkdirSync(output_image, { recursive: true });
   // }
 
-  const psdEXEPath = mainEXE;
+  const psdEXEPath = mainEXE
+  const psdPyPath = mainPy
 
-  const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4');
+  const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4')
 
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
 
-  const FPS = 30;
-  const MIN_SCENE_LEN = 10;
-  const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`;
-  // event.reply('meow', cmd);
-  // console.log("123", USER_DATA_PATH);
-  // console.log(cmd);
+  const MIN_SCENE_LEN = 10
+  // const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`
+  const cmd = `python "${psdPyPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`
+
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
-      console.error(`error: ${error}`);
-      return;
+      console.error(`error: ${error}`)
+      return
     }
     // console.log(stdout);
-    if (stdout.trim().replace(/\r?\n/g, '') === "Done") {
-      console.log('exe Done');
-      event.reply('start_PySceneDetect', "Success")
+    if (stdout.trim().replace(/\r?\n/g, '') === 'Done') {
+      console.log('exe Done')
+      event.reply('start_PySceneDetect', 'Success')
     } else {
-      console.log('exe error');
-      event.reply('start_PySceneDetect', "Fail")
+      console.log('exe error')
+      event.reply('start_PySceneDetect', 'Fail')
     }
-  });
+  })
 }
-
-
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-
-
     app.quit()
   }
 })
@@ -576,34 +579,37 @@ app.on('window-all-closed', () => {
 
  */
 
-
-
 async function gemini_process_all(AD_json, event) {
   //read json file
-  const fs = require('fs');
-  const path = require('path');
+  const fs = require('fs')
+  const path = require('path')
   //path: AD_json
   fs.readFile(AD_json, 'utf8', async (err, data) => {
     if (err) {
-      console.error('ERROR:', err);
-      return;
+      console.error('ERROR:', err)
+      return
     }
-    const jsonData = JSON.parse(data);
-    const jsonIndex = Object.keys(jsonData);
+    const jsonData = JSON.parse(data)
+    const jsonIndex = Object.keys(jsonData)
     for (const key of jsonIndex) {
-      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
-      const uri = await gemini_uploadFile(key + '.mp4', filePath);
-      const response = await gemini_sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', constants.GEMINI_MODEL, uri);
-      jsonData[key]["AD-content"][0] = response;
-      console.log('key:', key, 'response:', response);
+      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4')
+      const uri = await gemini_uploadFile(key + '.mp4', filePath)
+      const response = await gemini_sendMultiModalPromptWithVideo(
+        'gemini-rain-py',
+        'us-central1',
+        constants.GEMINI_MODEL,
+        uri
+      )
+      jsonData[key]['AD-content'][0] = response
+      console.log('key:', key, 'response:', response)
       // 暫停1分鐘
-      await new Promise(resolve => setTimeout(resolve, 35000));
+      await new Promise((resolve) => setTimeout(resolve, 35000))
     }
-    console.log('jsonData:', jsonData);
+    console.log('jsonData:', jsonData)
     fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
-      if (err) return "FAIL";
-      console.log('The file has been saved!');
-      event.reply('gemini_end', "Success")
-    });
-  });
+      if (err) return 'FAIL'
+      console.log('The file has been saved!')
+      event.reply('gemini_end', 'Success')
+    })
+  })
 }
