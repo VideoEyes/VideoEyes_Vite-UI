@@ -9,7 +9,7 @@
     Listen to the video with
     <span class="vue">Video Eye</span>
   </div>
-  <p class="tip">Press <code>選擇檔案</code> to edit audio description</p>
+  <p class="tip">Press <code>開新專案</code> to edit audio description</p>
 
   <div class="actions">
     <div class="action">
