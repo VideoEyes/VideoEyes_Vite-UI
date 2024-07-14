@@ -15,7 +15,7 @@ import Swal from 'sweetalert2';
 import {
   ArrowLeft,
   ArrowRight,
-  StarFilled ,
+  StarFilled,
   Delete,
   Edit,
   Share,
@@ -31,7 +31,6 @@ let KEY_main_json = ref([] as any);
 let FIRST_come_in_system = ref(true);
 
 onMounted(() => {
-
   // window.onbeforeunload = (event) => {
   //   event.preventDefault();
   //   console.log("I want to close the window");
@@ -318,6 +317,8 @@ let mousePosition = ref({ x: 0, y: 0 });
 let now_video_time = ref(0);
 let hoverInfoFlex = ref(1);
 
+
+
 function handleMouseMove(event) {
   let rect = event.target.getBoundingClientRect();
   mousePosition.value = {
@@ -460,7 +461,7 @@ function getShowTimeBar(ttvalue) {
       SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
     }
   }
-  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
+  console.log("ttvalue", ttvalue.value);
   return SHOW_TIME_BAR.value;
 }
 
@@ -475,131 +476,84 @@ function getShowTimeBar(ttvalue) {
   <div class="content">
     <div class="title">Project Name</div>
     <hr>
-    <div class="top">
-      <div class="top__left">
-        <div class="left_title">
-          <div class="edit-button">
-            <div class="ATool">
-              <div class="ad_tool_add" id="new_AD" @click="new_AD()">新增</div>
-              <div class="ad_tool_add" id="delete_AD" @click="delete_AD_hint()">刪除</div>
-              <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
-              <div class="ad_tool_add" id="" @click="mergeAudioToVideo()">匯出</div>
-              <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
-            </div>
-            <!-- <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
-            <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
-            <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
-            <el-button type="danger" id="" @click="re_read_AD()">生成全部語音</el-button>
-            <el-button type="danger" id="" @click="router.push('/outputPreview')">去output</el-button> -->
-          </div>
-        </div>
-        <div class="left_container">
-        </div>
-      </div>
-      <div class="top__middle">
-        <video controls>
-          <source id="video" src="" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-      <div class="top__right">
-        <div class="right_title">
-          <span>AD 參數設定</span>
-        </div>
-        <div class="ad_content_wrpaer">
-          <div class="ad_time_addcontent" v-for="(timeSetting, index) in timeSettings" :key="index">
-            <input type="text" class="ad_time" v-model="timeSetting.value" :placeholder="timeSetting.placeholder"
-              required>
-            <div class="underline"></div>
-            <label>{{ timeSetting.label }}</label>
-          </div>
-        </div>
-        <hr>
-        <div class="wrpaer_ad">
-          <div class="new_window">
-            <div class="window" v-for="window in windows" :key="window.id" :id="window.id"
-              :style="{ backgroundColor: window.color }" @click="toggleWindow(window)">
-              <span class="number">{{ window.number }}</span>
-            </div>
-          </div>
-          <hr>
-          <hr>
-          <hr>
-          <div class="write_ad">
-            <form action="/test.aspx" method="post">
-              <textarea class="textarea_size" v-model="textareaValue" style="resize:none; " placeholder=""></textarea>
-            </form>
-          </div>
-          <div class="ad_tool">
-            <div class="Tool">
-              <div class="ad_tool_add" @click="regen_AD">Gemini</div>
-              <div class="ad_tool_add" @click="read_AD">試聽</div>
-            </div>
-            <!-- <div class = "Tool">
-              <div class="ad_tool_add" @click="Store_AD">要新增</div>
-              <div class="ad_tool_add">要刪除</div>
-            </div> -->
-            <div class="Tool">
-              <div class="ad_tool_add" @click="">
-                刪除</div>
-              <div class="ad_tool_add" @click="save_AD">儲存</div>
-            </div>
-            <!-- <div class = "Tool">
-              <div class="ad_tool_add"
-                @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
-                輸出檔案</div>
-              <div class="ad_tool_add" @click="save_AD">存檔口述</div>
-            </div> -->
-          </div>
-        </div>
-      </div>
+    <div class="Outside-functional-Tool">
+      <div class="Outside-functional-Tool-Btn" id="new_AD" @click="new_AD()">新增(A)</div>
+      <div class="Outside-functional-Tool-Btn" id="delete_AD" @click="delete_AD_hint()">刪除(D)</div>
+      <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
+      <div class="Outside-functional-Tool-Btn" id="" @click="mergeAudioToVideo()">匯出(O)</div>
+      <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
     </div>
-    <!-- <p v-for="(value, index) in getShowTimeBar()" :key="index">
-      {{ value }}
-    </p> -->
-    <div class="time_bar">
-      <div class="time_bar__line">
-        <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
-          :style="{ left: `${value}%` }">
-          <div class="time_bar__line__time__line"></div>
-          <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
-          <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
-            <el-icon :size="25">
-              <StarFilled  />
+    <hr>
+    <div class="container">
+      <div class="top">
+        <div class="Video">
+          <video controls>
+            <source id="video" src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div class="AD-Fixed">
+          <div class="AD-Title">
+            AD Reference Setting
+          </div>
+          <div class="AD-content-reference" v-for="(timeSetting, index) in timeSettings" :key="index">
+            <div class="input-group">
+              <input type="text" class="ad_time" v-model="timeSetting.value" :placeholder="timeSetting.placeholder"
+                required>
+              <label for="">{{ timeSetting.label }}</label>
+            </div>
+          </div>
+          <hr>
+          <div class="wrpaer_ad">
+            <div class="now-window-group">
+              <div class="window" v-for="window in windows" :key="window.id" :id="window.id"
+                :style="{ backgroundColor: window.color }" @click="toggleWindow(window)">
+                <span>{{ window.number }}</span>
+              </div>
+            </div>
+            <div class="AD-write">
+              <form action="/test.aspx" method="post">
+                <textarea v-model="textareaValue" required></textarea>
+              </form>
+            </div>
+            <div class="AD-tool-wrap">
+              <div class="Tool-Btn" @click="regen_AD">Gemini</div>
+              <div class="Tool-Btn" @click="read_AD">試聽</div>
+              |
+              <div class="Tool-Btn" @click="">刪除</div>
+              <div class="Tool-Btn" @click="save_AD">儲存</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="down" id="ALL">
+        <div class="Time-bar">
+          <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
+            :style="{ left: `${value}%` }">
+            <div class="time_bar__line__time__line"></div>
+            <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
+              <el-icon :size="25">
+                <StarFilled />
+              </el-icon>
+            </div>
+          </div>
+        </div>
+        <div class="Arrow-Sound">
+          <button class="Arrow-Img" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
+            <el-icon :size="30" height="100" color="#ffffff">
+              <ArrowLeft />
             </el-icon>
-          </div>
-
-          <!-- <img @click="get_ad_information(index, ttvalue)" src="../picture/map.png" class="time_bar__line__time__img"
-            alt=""> -->
+          </button>
+          <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
+          <button class="Arrow-Img"
+            @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
+            <el-icon :size="30" height="100" color="#ffffff">
+              <ArrowRight />
+            </el-icon>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="down" id="ALL">
-      <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
-        <el-icon :size="30" height="100" color="#ffffff">
-          <ArrowLeft />
-        </el-icon>
-      </button>
-      <!-- <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
-        <div class="hover-info"
-          :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
-          X: {{ mousePosition.x.toFixed(2) }}%
-        </div>
-        {{ now_video_time }}
-        <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
-
-      </div>  -->
-      <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
-
-      <button class="right_arrow"
-        @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
-        <el-icon :size="30" height="100" color="#ffffff">
-          <ArrowRight />
-        </el-icon>
-      </button>
-      <!-- 不足60 取整數 -->
-    </div>
   </div>
 </template>
-<!-- <img v-for="(item, i) in inconlist" :key="i" :src="item"> -->
