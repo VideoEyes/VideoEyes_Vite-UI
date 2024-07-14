@@ -201,11 +201,6 @@ textarea {
     transform: translateX(-50%);
 }
 
-.time_bar__line__time__line {
-    width: 2px;
-    background-color: #888;
-}
-
 .time_bar__line__time__img {
     margin-top: 5px;
     cursor: pointer;

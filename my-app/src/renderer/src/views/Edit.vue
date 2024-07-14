@@ -313,37 +313,7 @@ const toggleWindow = (window) => {
 };
 let ttvalue = ref(1);
 let totaltime = ref(0);
-let mousePosition = ref({ x: 0, y: 0 });
-let now_video_time = ref(0);
-let hoverInfoFlex = ref(1);
 
-
-
-function handleMouseMove(event) {
-  let rect = event.target.getBoundingClientRect();
-  mousePosition.value = {
-    x: ((event.clientX - rect.left) / rect.width) * 100,
-    y: ((event.clientY - rect.top) / rect.height) * 100,
-  };
-  // 1分鐘
-  now_video_time.value = Math.round(((ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100) * 100) / 100;
-
-  if ((ttvalue.value == Math.ceil(totaltime.value / 60)) && totaltime.value != ttvalue.value * 60) {
-    const last = totaltime.value - (ttvalue.value - 1) * 60;
-    hoverInfoFlex.value = last / 60;
-  } else {
-    hoverInfoFlex.value = 1;
-  }
-
-}
-
-// function check_AD_Choice22222() {
-//   console.log("check_AD_Choice");
-//   for (let i = 0; i < windows.value.length; i++) {
-//     windows.value[i].color = 'rgb(255,255,255)'
-//   }
-//   windows.value[0].color = 'rgb(0,0,0)'
-// }
 
 function check_AD_choice() {
   if (nowSelectedAD != null) {
@@ -455,13 +425,15 @@ function calculatePosition(time, ttvalue) {
 }
 
 function getShowTimeBar(ttvalue) {
+  console.log("ttvalue", ttvalue);
   let SHOW_TIME_BAR = ref([] as any);
   for (let i = 0; i < show_time_bar.value.length; i++) {
     if (show_time_bar.value[i] < ttvalue * 100 && show_time_bar.value[i] >= (ttvalue - 1) * 100) {
-      SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
+      SHOW_TIME_BAR.value.push(show_time_bar.value[i] - ((ttvalue -1) *100)); // 修改這裡
     }
   }
-  console.log("ttvalue", ttvalue.value);
+  console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
+ 
   return SHOW_TIME_BAR.value;
 }
 
@@ -530,9 +502,8 @@ function getShowTimeBar(ttvalue) {
         <div class="Time-bar">
           <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
             :style="{ left: `${value}%` }">
-            <div class="time_bar__line__time__line"></div>
             <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
-              <el-icon :size="25">
+              <el-icon :size="20">
                 <StarFilled />
               </el-icon>
             </div>
