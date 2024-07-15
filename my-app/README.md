@@ -88,7 +88,7 @@ $ npm run build:linux
 
 ### pySceneDetect/mainTwice
 - 說明 : 切分影片並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數。完成後再將各片段進行切分，不設置最小切分鏡頭秒數。
-- python使用 : python .\main.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [二次切分後輸出片段資料夾位址]
+- python使用 : python .\mainTwice.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [二次切分後輸出片段資料夾位址]
 
 ### pySceneDetect/main_overlap_with_n_seconds.py
 - 說明 : 切分鏡頭並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數，片段會重疊n秒
@@ -96,7 +96,7 @@ $ npm run build:linux
 
 ### pySceneDetect/main_not_overlap_with_n_seconds.py
 - 說明 : 切分鏡頭並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數(乃透過片段組合方式，該變數使用方式與上法不同)，片段額外增加n秒，片段間不重疊
-- python使用 : python .\main_overlap_with_n_seconds.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [增加n秒數]
+- python使用 : python .\main_not_overlap_with_n_seconds.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [增加n秒數]
 
 ### pySceneDetect/video_cut
 - 說明 : 切分影片
