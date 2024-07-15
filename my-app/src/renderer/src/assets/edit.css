@@ -113,16 +113,16 @@
 }
 
 .window {
+    color: #000000;
     border-radius: 10px;
     padding: 8px 45px;
     background-color: #000000;
     transition: 0.2s;
 }
-
 .window:hover {
     background-color: #ffffff;
-    cursor: pointer;
     color: #000000;
+    cursor: pointer;
 }
 
 .AD-write {
