@@ -123,50 +123,59 @@ app.whenReady().then(() => {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
-        const cmd = `python "${haystack_gemini}" "${constants.VIDEO_PATH}"`
-        const audioText_json = {}
+        const cmd = `python "${haystack_gemini}" "${constants.VIDEO_PATH}" "${constants.GEMINI_OUTPUT_PATH}"`
+        let audioText_json = {}        
         exec(cmd, { windowsHide: true }, async(error, stdout, stderr) => {
           if (error) {
             console.error(`error: ${error}`)
             return
           }
-          audioText_json = JSON.parse(stdout)
-          console.log(audioText_json)
-          for (let i = 0; i < audioText_json.length; i++) {
-            const timestamp = audioText_json[i].time
-            const text = audioText_json[i].content
-            await AD_tts(timestamp, text, constants.AUDIO_FOLDER)
-          }
-  
-          let mainJson = {}
-          for (let i = 0; i < audioText_json.length; i++) {
-            const timestamp = audioText_json[i].time
-            //TODO: 取影片長度
-            const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : '00:00:00.000'
-            const text = audioText_json[i].content
-            mainJson['AD' + String(i + 1).padStart(3, 0)] = {
-              'scene-start-time': timestamp,
-              'scene-end-time': next_timestamp,
-              'AD-start-time': timestamp,
-              'AD-content': [text, '', '', ''],
-              'AD-content-ID': 0
+          // 讀檔 gemini_result.json
+          const fs = require('fs')
+          const path = require('path')
+          const gemini_result = constants.GEMINI_OUTPUT_PATH
+          fs.readFile(gemini_result, 'utf8', async(err, data) => {
+            audioText_json = JSON.parse(data)
+            audioText_json = audioText_json['audioDescriptionList']
+            console.log(audioText_json)
+            for (let i = 0; i < audioText_json.length; i++) {
+              const timestamp = audioText_json[i].time
+              const text = audioText_json[i].content
+              await AD_tts(timestamp, text, constants.AUDIO_FOLDER)
             }
-          }
-          console.log('mainJson:', mainJson)
-          fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
-            if (err) {
-              console.error('ERROR:', err)
-              return
+    
+            let mainJson = {}
+            console.log('audioText_json.length:', audioText_json.length)
+            console.log('audioText_json:', audioText_json)
+            for (let i = 0; i < audioText_json.length; i++) {
+              const timestamp = audioText_json[i].time
+              //TODO: 取影片長度
+              const next_timestamp = audioText_json[i + 1] ? audioText_json[i + 1].time : '00:00:00.000'
+              const text = audioText_json[i].content
+              mainJson['AD' + String(i + 1).padStart(3, 0)] = {
+                'scene-start-time': timestamp,
+                'scene-end-time': next_timestamp,
+                'AD-start-time': timestamp,
+                'AD-content': [text, '', '', ''],
+                'AD-content-ID': 0
+              }
             }
-            console.log('The file has been saved!')
+            console.log('mainJson:', mainJson)
+            fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
+              if (err) {
+                console.error('ERROR:', err)
+                return
+              }
+              console.log('The file has been saved!')
+            })
+    
+            await mergeAllAudioToVideo(
+              constants.VIDEO_PATH,
+              constants.AUDIO_FOLDER,
+              constants.OUTPUT_VIDEO_FOLDER
+            )
+            event.reply('generate-reply', true)
           })
-  
-          await mergeAllAudioToVideo(
-            constants.VIDEO_PATH,
-            constants.AUDIO_FOLDER,
-            constants.OUTPUT_VIDEO_FOLDER
-          )
-          event.reply('generate-reply', true)
         })
         // const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH)
         // console.log('videoUri: ' + videoUri)

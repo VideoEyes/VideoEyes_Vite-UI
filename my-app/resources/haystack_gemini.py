@@ -1,4 +1,4 @@
-# usage: python haystack_gemini_video_summarize.py [video_path]
+# usage: python haystack_gemini_video_summarize.py [video_path] [output_json_path]
 
 from haystack_integrations.components.generators.google_vertex import VertexAIGeminiGenerator
 from vertexai.generative_models import Part
@@ -16,7 +16,7 @@ import re
 from haystack.components.builders import PromptBuilder
 from google.cloud import storage
 from haystack import Pipeline
-from sys import argv
+from sys import argv, stdout
 
 class audioDescription(BaseModel):
     time: datetime
@@ -163,6 +163,7 @@ pipeline.connect("output_validator.error_message", "add_video.error_message")
 
 
 path = argv[1]
+output_path = argv[2]
 result = pipeline.run({
     "upload2gcs": { "file_path": path},
     "add_video": {"schema": json_schema}
@@ -170,7 +171,9 @@ result = pipeline.run({
 
 valid_reply = result["output_validator"]["valid_replies"][0]
 valid_json = json.loads(valid_reply)
-print(valid_json)
+
+with open(output_path , "w") as f:
+    json.dump(valid_json, f, indent=2)
 
 
 

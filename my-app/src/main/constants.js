@@ -5,6 +5,7 @@ const USER_DATA_PATH = app.getPath('userData');
 const PROJECT_NAME = 'Project_Name';
 const PROJECT_PATH = path.join(USER_DATA_PATH, PROJECT_NAME);
 const output_json = path.join(PROJECT_PATH, 'json/main.json');
+const GEMINI_OUTPUT_PATH = path.join(PROJECT_PATH, 'json/gemini_output.json');
 const CLIPS_FOLDER = path.join(PROJECT_PATH, 'video');
 const VIDEO_PATH = path.join(CLIPS_FOLDER, 'video.mp4');
 const AUDIO_FOLDER = path.join(PROJECT_PATH, 'audio');
@@ -27,5 +28,6 @@ export const constants = {
   VIDEO_PATH: VIDEO_PATH,
   AUDIO_FOLDER: AUDIO_FOLDER,
   FINALLY_FOLDER: FINALLY_FOLDER,
-  TTS_Type: TTS_Type
+  TTS_Type: TTS_Type,
+  GEMINI_OUTPUT_PATH: GEMINI_OUTPUT_PATH
 };
