@@ -103,9 +103,8 @@ class AddVideo2Prompt:
         self.prompt = prompt
 
     @component.output_types(prompt=list)
-    def run(self,schema: str , uri: str, invalid_replies: Optional[List[str]] = None, error_message: Optional[str] = None):
-        prompt = prompt_builder.run(schema=schema, invalid_replies=invalid_replies, error_message=error_message)
-        return {"prompt": [Part.from_uri(uri, mime_type="video/mp4"),prompt["prompt"]]}
+    def run(self, uri: str, prompt: str):
+        return {"prompt": [Part.from_uri(uri, mime_type="video/mp4"),prompt]}
 
 add_video_2_prompt = AddVideo2Prompt(prompt=prompt_builder)
 
@@ -147,6 +146,7 @@ pipeline = Pipeline(max_loops_allowed=5)
 # Add components to your pipeline
 # pipeline.add_component(instance=prompt_builder, name="prompt_builder")
 pipeline.add_component(instance=upload2gcs, name="upload2gcs")
+pipeline.add_component(instance=prompt_builder, name="prompt_builder")
 pipeline.add_component(instance=add_video_2_prompt, name="add_video")
 pipeline.add_component(instance=gemini_generator, name="llm")
 pipeline.add_component(instance=output_validator, name="output_validator")
@@ -154,19 +154,20 @@ pipeline.add_component(instance=output_validator, name="output_validator")
 # Now, connect the components to each other
 # pipeline.connect("prompt_builder", "add_video")
 pipeline.connect("upload2gcs", "add_video")
+pipeline.connect("prompt_builder", "add_video")
 pipeline.connect("add_video.prompt", "llm")
 # pipeline.connect("prompt_builder", "llm")
 pipeline.connect("llm", "output_validator")
 # # If a component has more than one output or input, explicitly specify the connections:
-pipeline.connect("output_validator.invalid_replies", "add_video.invalid_replies")
-pipeline.connect("output_validator.error_message", "add_video.error_message")
+pipeline.connect("output_validator.invalid_replies", "prompt_builder.invalid_replies")
+pipeline.connect("output_validator.error_message", "prompt_builder.error_message")
 
 
 path = argv[1]
 output_path = argv[2]
 result = pipeline.run({
     "upload2gcs": { "file_path": path},
-    "add_video": {"schema": json_schema}
+    "prompt_builder": {"schema": json_schema}
 })
 
 valid_reply = result["output_validator"]["valid_replies"][0]
