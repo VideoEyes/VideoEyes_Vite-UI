@@ -5,7 +5,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import mainEXE from '../../resources/main.exe?asset&asarUnpack'
 import mainPy from '../../resources/main.py?asset&asarUnpack'
-import haystack_gemini from '../../resources/haystack_gemini.py?asset&asarUnpack'
+import haystack_gemini from '../../resources/haystack_gemini_video_AD_Timestamp.py?asset&asarUnpack'
 import video_cutEXE from '../../resources/video_cut.exe?asset&asarUnpack'
 import { session } from 'electron'
 import { constants } from './constants'
@@ -138,6 +138,17 @@ app.whenReady().then(() => {
             audioText_json = JSON.parse(data)
             audioText_json = audioText_json['audioDescriptionList']
             console.log(audioText_json)
+            if (fs.existsSync(constants.AUDIO_FOLDER)) {
+              try {
+                await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+                console.log('The folder has been deleted!')
+
+                await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+                console.log('The folder has been created!')
+              } catch (error) {
+                console.error('Error clearing and creating folder:', error)
+              }
+            }
             for (let i = 0; i < audioText_json.length; i++) {
               const timestamp = audioText_json[i].time
               const text = audioText_json[i].content
