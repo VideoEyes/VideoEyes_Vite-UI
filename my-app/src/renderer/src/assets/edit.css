@@ -48,8 +48,6 @@
     height: auto;
 }
 
-
-
 .AD-Fixed {
     flex: 1;
     border: 5px solid #464242;
@@ -74,7 +72,7 @@
 .input-group label {
     position: absolute;
     top: 50%;
-    left: 15%;
+    left: 25%;
     transform: translateY(-50%);
     font-size: 20px;
     color: #fff;
@@ -84,7 +82,7 @@
 }
 
 .input-group input {
-    width: 350px;
+    /* width: 350px; */
     height: 40px;
     font-size: 20px;
     color: #fff;

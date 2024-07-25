@@ -101,10 +101,7 @@ function initialalize() {
     }
   });
 }
-const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
-//=======================
 
-let AD_ALL_time = ref({} as any);
 let textareaValue = ref('');
 
 const Toast_add = Swal.mixin({
@@ -319,7 +316,7 @@ function check_AD_choice() {
   if (nowSelectedAD != null) {
     window.electron.ipcRenderer.send('check-AD-choice', nowSelectedAD);
     window.electron.ipcRenderer.once('now_Selected_AD-reply', (event, arg) => {
-      console.log(arg); // 輸出來自主進程的回覆
+      // console.log(arg); // 輸出來自主進程的回覆
       for (let i = 0; i < windows.value.length; i++) {
         windows.value[i].color = 'rgb(255,255,255)'
       }
@@ -343,12 +340,12 @@ function get_ad_information(index, ttvalue) {
   check_AD_choice(); //檢查現在選擇的AD，改變顏色用
   // 要給存AD的 AD name
   NOW_select_AD_name.value = "AD" + index;
-  console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
+  // console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
     scene_output_video.value = arg.data["index"];
-    console.log("scene_output_video", scene_output_video);
+    // console.log("scene_output_video", scene_output_video);
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
@@ -390,6 +387,30 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
+      const Total_changeTimeButton = timeSettings.value[0].value.split(":");
+      const changeTimeButton = document.getElementById('changeTimeButton');
+      let QW = ref(0);
+      for (let i = 0; i < Total_changeTimeButton.length; i++) {
+        if (i == 0) {
+          QW.value += parseInt(Total_changeTimeButton[i]) * 3600;
+        } else if (i == 1) {
+          QW.value += parseInt(Total_changeTimeButton[i]) * 60;
+        } else {
+          QW.value += parseFloat(Total_changeTimeButton[i]);
+        }
+      }
+      if (changeTimeButton) {
+        const video = document.getElementById('video') as HTMLVideoElement;
+        const newTime = Number(QW.value);
+        if (!isNaN(newTime) && isFinite(newTime)) {
+          video.currentTime = newTime;
+        } else {
+          console.error('QW.value 不是一個有效的數字', QW.value);
+        }
+      }
+
+
+
       nowAdChoice = arg.data["AD-content-ID"];
       textareaValue.value = arg.data["AD-content"][nowAdChoice];
       nowSelectedADIndex = arg.data["index"];
@@ -425,15 +446,15 @@ function calculatePosition(time, ttvalue) {
 }
 
 function getShowTimeBar(ttvalue) {
-  console.log("ttvalue", ttvalue);
+  // console.log("ttvalue", ttvalue);
   let SHOW_TIME_BAR = ref([] as any);
   for (let i = 0; i < show_time_bar.value.length; i++) {
     if (show_time_bar.value[i] < ttvalue * 100 && show_time_bar.value[i] >= (ttvalue - 1) * 100) {
-      SHOW_TIME_BAR.value.push(show_time_bar.value[i] - ((ttvalue -1) *100)); // 修改這裡
+      SHOW_TIME_BAR.value.push(show_time_bar.value[i] - ((ttvalue - 1) * 100)); // 修改這裡
     }
   }
-  console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
- 
+  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
+
   return SHOW_TIME_BAR.value;
 }
 
@@ -459,8 +480,8 @@ function getShowTimeBar(ttvalue) {
     <div class="container">
       <div class="top">
         <div class="Video">
-          <video controls>
-            <source id="video" src="" type="video/mp4">
+          <video controls id="video">
+            <source src="" type="video/mp4">
             Your browser does not support the video tag.
           </video>
         </div>
@@ -503,7 +524,7 @@ function getShowTimeBar(ttvalue) {
           <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
             :style="{ left: `${value}%` }">
             <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
-              <el-icon :size="20">
+              <el-icon :size="20" id="changeTimeButton">
                 <StarFilled />
               </el-icon>
             </div>
