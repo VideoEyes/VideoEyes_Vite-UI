@@ -132,11 +132,11 @@
 }
 
 textarea {
-    max-width: 350px;
-    min-width: 350px;
+    max-width: 380px;
+    min-width: 380px;
     max-height: 120px;
-    min-height: 30px;
-    font-size: 25px;
+    min-height: 120px;
+    font-size: 22px;
     font-family: 'Nanum Gothic', sans-serif;
     border-radius: 5px;
 }

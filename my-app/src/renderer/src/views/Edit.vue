@@ -405,7 +405,7 @@ function get_ad_information(index, ttvalue) {
         if (!isNaN(newTime) && isFinite(newTime)) {
           video.currentTime = newTime;
         } else {
-          console.error('QW.value 不是一個有效的數字', QW.value);
+          console.error('無效數字', QW.value);
         }
       }
 
@@ -471,7 +471,7 @@ function getShowTimeBar(ttvalue) {
     <hr>
     <div class="Outside-functional-Tool">
       <div class="Outside-functional-Tool-Btn" id="new_AD" @click="new_AD()">新增(A)</div>
-      <div class="Outside-functional-Tool-Btn" id="delete_AD" @click="delete_AD_hint()">刪除(D)</div>
+      <!-- <div class="Outside-functional-Tool-Btn" id="delete_AD" @click="delete_AD_hint()">刪除(D)</div> -->
       <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
       <div class="Outside-functional-Tool-Btn" id="" @click="mergeAudioToVideo()">匯出(O)</div>
       <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
@@ -513,7 +513,7 @@ function getShowTimeBar(ttvalue) {
               <div class="Tool-Btn" @click="regen_AD">Gemini</div>
               <div class="Tool-Btn" @click="read_AD">試聽</div>
               |
-              <div class="Tool-Btn" @click="">刪除</div>
+              <div class="Tool-Btn" @click="delete_AD_hint">刪除</div>
               <div class="Tool-Btn" @click="save_AD">儲存</div>
             </div>
           </div>
