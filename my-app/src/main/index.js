@@ -538,7 +538,7 @@ app.whenReady().then(() => {
 
   // 更改title name
   ipcMain.on('change-project-name', (event,Now_project, newName) => {
-    console.log('Now_project:', Now_project,newName);
+    // console.log('Now_project:', Now_project,newName);
     const oldProjectNamePath = path.join(PROJECT_PATH, 'video/Name',Now_project);
     const newProjectNamePath = path.join(PROJECT_PATH, 'video/Name', newName);
 

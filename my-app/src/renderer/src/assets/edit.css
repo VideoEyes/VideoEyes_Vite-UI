@@ -209,6 +209,18 @@ textarea {
     color: #FFD700;
 
 }
+#tips {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #333;
+    color: white;
+    border-radius: 3px;
+    position: absolute;
+    z-index: 10;
+    top: -20px;
+    transition: 0.5s;
+    white-space: nowrap;
+  }
 
 .Arrow-Sound {
     display: flex;

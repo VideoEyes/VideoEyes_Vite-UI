@@ -416,7 +416,7 @@ function get_ad_information(index, ttvalue) {
   });
 }
 
-function Get_Title_name(){
+function Get_Title_name() {
   window.electron.ipcRenderer.send('get-project-name');
   window.electron.ipcRenderer.on('get-project-name-reply', (event, arg) => {
     Project_Name.value = arg;
@@ -480,11 +480,15 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
+let isTipVisible = ref(false);
 
-// async function re_read_AD() {
-//   await window.electron.ipcRenderer.send('read-All-AD');
-//   mergeAudioToVideo();
-// }
+function showTip() {
+  isTipVisible.value = true;
+}
+
+function hideTip() {
+  isTipVisible.value = false;
+}
 
 </script>
 
@@ -546,11 +550,13 @@ function getShowTimeBar(ttvalue) {
         <div class="Time-bar">
           <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
             :style="{ left: `${value}%` }">
-            <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
+            <div class="time_bar__line__time__img" @mouseover="showTip" @mouseout="hideTip"
+              @click="get_ad_information(index, ttvalue)">
               <el-icon :size="20" id="changeTimeButton">
                 <StarFilled />
               </el-icon>
             </div>
+            <div v-if="isTipVisible" id="tips">Look</div>
           </div>
         </div>
         <div class="Arrow-Sound">
