@@ -4,8 +4,6 @@ import { toRefs, reactive, ref, onMounted, watchEffect } from 'vue'
 import { useWindowSize } from "@vueuse/core";
 import listen from "../picture/listen.png"
 import store from "../picture/store.png"
-import hint from "../picture/ask.png"
-import iconUrl from "../picture/Hint.png"
 import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
@@ -29,21 +27,18 @@ let sceneStart_with_index = ref([] as any);
 let sceneStart: any = ref({});
 let KEY_main_json = ref([] as any);
 let FIRST_come_in_system = ref(true);
+let Project_Name = ref("專案名稱");
 
 onMounted(() => {
-  // window.onbeforeunload = (event) => {
-  //   event.preventDefault();
-  //   console.log("I want to close the window");
-  //   window.electron.ipcRenderer.send('window-close', JSON.stringify(all_information));
-  // }
-  const video = document.getElementById('video') as HTMLSourceElement;
 
+  const video = document.getElementById('video') as HTMLSourceElement;
   const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
   video.src = video_path;
   let videoElement = document.querySelector('video') as HTMLVideoElement;
   videoElement.onloadedmetadata = () => {
     totaltime.value = videoElement.duration;
   };
+  Get_Title_name();
   initialalize();
 })
 
@@ -421,6 +416,33 @@ function get_ad_information(index, ttvalue) {
   });
 }
 
+function Get_Title_name(){
+  window.electron.ipcRenderer.send('get-project-name');
+  window.electron.ipcRenderer.on('get-project-name-reply', (event, arg) => {
+    Project_Name.value = arg;
+  });
+}
+
+function Title_Name() {
+  Swal.fire({
+    title: "請輸入新的專案名稱",
+    input: "text",
+    showCancelButton: true,
+    confirmButtonText: "確認",
+    cancelButtonText: "取消",
+    inputValidator: (value) => {
+      if (!value) {
+        return "請輸入專案名稱";
+      }
+    },
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.electron.ipcRenderer.send('change-project-name', Project_Name.value, result.value);
+      Project_Name.value = result.value;
+      Swal.fire("專案名稱已更改", "", "success");
+    }
+  });
+}
 
 function roundTo(num, decimal) {
   return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal);
@@ -458,6 +480,7 @@ function getShowTimeBar(ttvalue) {
   return SHOW_TIME_BAR.value;
 }
 
+
 // async function re_read_AD() {
 //   await window.electron.ipcRenderer.send('read-All-AD');
 //   mergeAudioToVideo();
@@ -467,7 +490,7 @@ function getShowTimeBar(ttvalue) {
 
 <template>
   <div class="content">
-    <div class="title">Project Name</div>
+    <div class="title" @click="Title_Name()">{{ Project_Name }}</div>
     <hr>
     <div class="Outside-functional-Tool">
       <div class="Outside-functional-Tool-Btn" id="new_AD" @click="new_AD()">新增(A)</div>

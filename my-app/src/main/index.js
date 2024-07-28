@@ -23,6 +23,7 @@ const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
 const output_json = path.join(PROJECT_PATH, 'json/main.json')
+const Video_PATH = path.join(PROJECT_PATH, 'video')
 const { VertexAI } = require('@google-cloud/vertexai')
 // var ffmpeg = require('fluent-ffmpeg');
 
@@ -114,6 +115,18 @@ app.whenReady().then(() => {
       console.log('output folder not exist, create one')
       fs.mkdirSync(output)
     }
+    const PR = path.join(output, 'Name')
+    // project name
+    if (!fs.existsSync(PR)) {
+      console.log('output folder not exist, create one')
+      fs.mkdirSync(PR)
+    }
+    const PR_next = path.join(PR, 'Name')
+    if (!fs.existsSync(PR_next)) {
+      console.log('output folder not exist, create one')
+      fs.mkdirSync(PR_next)
+    }
+
     //rename video file
     const output_file = path.join(output, 'video.mp4')
     fs.copyFile(input, output_file, async (err) => {
@@ -338,6 +351,10 @@ app.whenReady().then(() => {
       event.reply('read-file-reply', { success: true, data: jsonData })
     })
   })
+
+
+
+
   //檢查AD選擇
   ipcMain.on('check-AD-choice', (event, now_Selected_AD) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
@@ -430,7 +447,7 @@ app.whenReady().then(() => {
         jsonData[NOW_select_AD_name_value]['scene-start-time'] = time1
         jsonData[NOW_select_AD_name_value]['scene-end-time'] = time2
         jsonData[NOW_select_AD_name_value]['AD-start-time'] = tim3
-        fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => {})
+        fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => { })
       })
     }
   )
@@ -504,6 +521,36 @@ app.whenReady().then(() => {
   ipcMain.on('read-All-AD', async (event) => {
     call_readEXE_recursive()
   })
+
+  ipcMain.on('get-project-name', (event) => {
+    // console.log('get-project-name')
+    const projectName_PATH = path.join(PROJECT_PATH, 'video/Name')
+    fs.readdir(projectName_PATH, 'utf8', (err, data) => {
+      if (err) {
+        console.error('ERROR:', err)
+        return
+      }
+      event.reply('get-project-name-reply', data[0])
+    })
+  })
+
+  
+
+  // 更改title name
+  ipcMain.on('change-project-name', (event,Now_project, newName) => {
+    console.log('Now_project:', Now_project,newName);
+    const oldProjectNamePath = path.join(PROJECT_PATH, 'video/Name',Now_project);
+    const newProjectNamePath = path.join(PROJECT_PATH, 'video/Name', newName);
+
+    fs.rename(oldProjectNamePath, newProjectNamePath, (err) => {
+        if (err) {
+            console.error('ERROR:', err);
+            return;
+        }
+        console.log('專案名稱已更改');
+    });
+});
+
 })
 
 async function gemini_with_scene(name, videoPath) {
