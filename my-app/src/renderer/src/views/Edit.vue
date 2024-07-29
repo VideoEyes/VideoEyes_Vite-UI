@@ -124,6 +124,7 @@ const Toast_delete = Swal.mixin({
 });
 
 function read_AD() {
+  visible_loading.value = true;
   if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
@@ -131,10 +132,13 @@ function read_AD() {
     });
     return;
   }
+  
   window.electron.ipcRenderer.send('read-AD', KEY_main_json.value[nowSelectedAD], nowAdChoice, sceneStart[KEY_main_json.value[nowSelectedAD]]);
+  visible_loading.value = false;
 }
 
 function regen_AD() {
+  visible_loading.value = true;
   if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
@@ -150,6 +154,11 @@ function regen_AD() {
     console.log(arg); // 輸出來自主進程的回覆
     textareaValue.value = arg;
     save_AD();
+  });
+  visible_loading.value = false;
+  Swal.fire({
+    icon: "success",
+    title: "語音生成完成",
   });
 }
 
@@ -424,6 +433,7 @@ function Get_Title_name() {
 }
 
 function Title_Name() {
+  // visible_loading.value = true;
   Swal.fire({
     title: "請輸入新的專案名稱",
     input: "text",
@@ -490,9 +500,13 @@ function hideTip() {
   isTipVisible.value = false;
 }
 
+let visible_loading = ref(false);
+
 </script>
 
 <template>
+  <div v-if="visible_loading" class="spinner">
+  </div>
   <div class="content">
     <div class="title" @click="Title_Name()">{{ Project_Name }}</div>
     <hr>

@@ -42,7 +42,6 @@
     box-sizing: border-box;
 }
 
-
 .Video video {
     width: 100%;
     height: auto;
@@ -59,7 +58,6 @@
     font-weight: bold;
     text-align: center;
 }
-
 
 .input-group {
     position: relative;
@@ -78,7 +76,7 @@
     color: #fff;
     padding: 0 5px;
     pointer-events: none;
-    transition: .3s;
+    transition: 0.3s;
 }
 
 .input-group input {
@@ -93,8 +91,8 @@
     border-radius: 5px;
 }
 
-.input-group input:focus~label,
-.input-group input:valid~label {
+.input-group input:focus ~ label,
+.input-group input:valid ~ label {
     top: 0;
     font-size: 15px;
     background: #000000;
@@ -128,7 +126,6 @@
     align-items: center;
     display: flex;
     justify-content: center;
-
 }
 
 textarea {
@@ -137,28 +134,24 @@ textarea {
     max-height: 120px;
     min-height: 120px;
     font-size: 22px;
-    font-family: 'Nanum Gothic', sans-serif;
+    font-family: "Nanum Gothic", sans-serif;
     border-radius: 5px;
 }
-
 
 ::-webkit-scrollbar {
     width: 12px;
 }
-
 
 ::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
 }
 
-
 ::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 10px;
     border: 3px solid #f1f1f1;
 }
-
 
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
@@ -171,7 +164,6 @@ textarea {
     margin: 20px;
 }
 
-
 .Tool-Btn {
     padding: 2px 10px;
     border-radius: 10px;
@@ -180,7 +172,7 @@ textarea {
     text-align: center;
     margin: 8px 10px;
     font-size: 20px;
-    font-family: 'Nanum Gothic', sans-serif;
+    font-family: "Nanum Gothic", sans-serif;
 }
 
 .Tool-Btn:hover {
@@ -202,12 +194,10 @@ textarea {
 .time_bar__line__time__img {
     margin-top: 5px;
     cursor: pointer;
-
 }
 
 .time_bar__line__time__img el-icon {
-    color: #FFD700;
-
+    color: #ffd700;
 }
 #tips {
     display: inline-block;
@@ -220,7 +210,24 @@ textarea {
     top: -20px;
     transition: 0.5s;
     white-space: nowrap;
-  }
+}
+
+.spinner {
+    position: absolute;
+    height: 120px;
+    width: 120px;
+    border: 6px solid;
+    border-color: white transparent white transparent;
+    border-radius: 50%;
+    animation: spin 1.3s ease infinite; ;
+}
+
+
+@keyframes spin {
+    to{
+        transform: rotate(360deg);
+    }
+}
 
 .Arrow-Sound {
     display: flex;
@@ -228,18 +235,18 @@ textarea {
 
 .Arrow-Img {
     background-color: #151515;
-    border: #151515 solid ;
+    border: #151515 solid;
 }
 
-.Arrow-Img{
+.Arrow-Img {
     filter: brightness(1) invert(0);
     transition: filter 0.3s;
 }
 
-.Arrow-Img:hover  {
+.Arrow-Img:hover {
     filter: drop-shadow(0 0 5px #363636);
     cursor: pointer;
 }
-.down{
+.down {
     background-color: #151515;
 }
