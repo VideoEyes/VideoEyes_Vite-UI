@@ -1,7 +1,7 @@
 #%%
 import pandas as pd
 from haystack_integrations.components.generators.google_vertex import VertexAIGeminiGenerator
-from vertexai.generative_models import Part
+from vertexai.generative_models import Part, SafetySetting, HarmCategory, HarmBlockThreshold
 import json
 import random
 import pydantic
@@ -15,11 +15,11 @@ from haystack import Pipeline
 
 prompt_template = """
 Videro Summary:
-{{ summary }}
+{{ summary[0] }}
 
 Select the best answer to the following multiple-choice question based on the video. Respond with only the letter (A, B, C, or D) of the correct option. 
 {{ question }}
-{{ options }}
+
 The best answer is:
 """
 
@@ -42,6 +42,7 @@ class AddVideo2Prompt:
 
     @component.output_types(prompt=list)
     def run(self, uri: str, prompt: str):
+        print(prompt)
         return {"prompt": [Part.from_uri(uri, mime_type="video/mp4"),prompt]}
 
 
@@ -60,7 +61,14 @@ class GeminiGenerator:
     
     @component.output_types(replies=List[str])
     def run(self, prompt: List):
-        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model)
+        safety_config = [
+            SafetySetting(category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+            SafetySetting(category=HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+            SafetySetting(category=HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+            SafetySetting(category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+            SafetySetting(category=HarmCategory.HARM_CATEGORY_UNSPECIFIED, threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+        ]
+        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, safety_settings=safety_config)
         return {"replies": generator.run(prompt)["replies"]}
 
 gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-preview-0514")
@@ -110,7 +118,7 @@ pipeline.connect("add_video.prompt", "llm")
 #%%
 df = pd.read_parquet("hf://datasets/lmms-lab/Video-MME/videomme/test-00000-of-00001.parquet")
 # video_id = df[df['duration'] == 'short']['video_id'].unique()
-video_id = ['007','298']
+video_id = ['104']
 output = []
 
 
@@ -149,7 +157,7 @@ for id in video_id:
 
         result = pipeline.run({
             "upload2gcs": { "file_path": path},
-            "prompt_builder": {"question": row['question']},
+            "prompt_builder": {"question": q},
         })
 
         question_dict["response"] = result['llm']['replies'][0]
@@ -157,4 +165,11 @@ for id in video_id:
         video_dict["questions"].append(question_dict)
 
     output.append(video_dict)
+    print(video_dict)
+# %%
+# json
+import json
+o = {"data": output}
+with open('data.json', 'w') as f:
+    json.dump(o, f)
 # %%
