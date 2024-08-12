@@ -7,9 +7,11 @@ import store from "../picture/store.png"
 import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
+import { useRoute } from 'vue-router';
 import router from '../router';
 import Swal from 'sweetalert2';
 
+let OLD_PATH = ref(''); // 使用 `ref` 來存儲 `OLD_PATH`
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,16 +31,27 @@ let KEY_main_json = ref([] as any);
 let FIRST_come_in_system = ref(true);
 let Project_Name = ref("專案名稱");
 
-onMounted(() => {
 
+onMounted(async () => {
+  const route = useRoute();
+  const query = route.query.data as string;
+  if (query) {
+    OLD_PATH.value = query;
+    console.log("OLD_PATH", OLD_PATH.value);
+    await Get_Title_name(OLD_PATH.value);
+
+  } else {
+    await Get_Title_name("");
+  }
   const video = document.getElementById('video') as HTMLSourceElement;
-  const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
+  const video_path = await window.electron.ipcRenderer.sendSync('get-video-path');
+
+  console.log("video_path", video_path);
   video.src = video_path;
   let videoElement = document.querySelector('video') as HTMLVideoElement;
   videoElement.onloadedmetadata = () => {
     totaltime.value = videoElement.duration;
   };
-  Get_Title_name();
   initialalize();
 })
 
@@ -47,11 +60,15 @@ onMounted(() => {
 import ffmpeg from 'fluent-ffmpeg';
 
 function mergeAudioToVideo() {
+  visible_loading.value = true;
+  overlayVisible.value = true;
   // console.log("mergeAudioToVideo");
   window.electron.ipcRenderer.send('mergeAudioToVideo');
   window.electron.ipcRenderer.once('mergeAudioToVideo-reply', (event, arg) => {
     console.log(arg); // 輸出來自主進程的回覆
     if (arg) {
+      visible_loading.value = false;
+      overlayVisible.value = false;
       router.push('/outputPreview');
     } else {
       console.error('Error reading file:', arg.error);
@@ -132,13 +149,14 @@ function read_AD() {
     });
     return;
   }
-  
+
   window.electron.ipcRenderer.send('read-AD', KEY_main_json.value[nowSelectedAD], nowAdChoice, sceneStart[KEY_main_json.value[nowSelectedAD]]);
   visible_loading.value = false;
 }
 
 function regen_AD() {
   visible_loading.value = true;
+  overlayVisible.value = true;
   if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
@@ -154,12 +172,14 @@ function regen_AD() {
     console.log(arg); // 輸出來自主進程的回覆
     textareaValue.value = arg;
     save_AD();
+    visible_loading.value = false;
+    overlayVisible.value = false;
+    Swal.fire({
+      icon: "success",
+      title: "語音生成完成",
+    });
   });
-  visible_loading.value = false;
-  Swal.fire({
-    icon: "success",
-    title: "語音生成完成",
-  });
+
 }
 
 function new_AD() {
@@ -199,7 +219,7 @@ function save_AD() {
     // let data = [NOW_select_AD_name.value, textareaValue.value];
     // console.log("data to be sent", data);
     window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice, timeSettings.value[0].value, timeSettings.value[1].value, timeSettings.value[2].value);
-    window.location.reload();
+    // window.location.reload();
   }
 
 }
@@ -271,8 +291,6 @@ function change_AD_choice(index) {
     });
   }
 }
-
-
 //=======================
 
 const state = reactive({
@@ -412,9 +430,6 @@ function get_ad_information(index, ttvalue) {
           console.error('無效數字', QW.value);
         }
       }
-
-
-
       nowAdChoice = arg.data["AD-content-ID"];
       textareaValue.value = arg.data["AD-content"][nowAdChoice];
       nowSelectedADIndex = arg.data["index"];
@@ -425,15 +440,27 @@ function get_ad_information(index, ttvalue) {
   });
 }
 
-function Get_Title_name() {
-  window.electron.ipcRenderer.send('get-project-name');
-  window.electron.ipcRenderer.on('get-project-name-reply', (event, arg) => {
-    Project_Name.value = arg;
-  });
+async function Get_Title_name(OLD_PA) {
+  // console.log("OLD_PA", que);
+
+  if (OLD_PA == "" || OLD_PA == null || OLD_PA == undefined) {
+    window.electron.ipcRenderer.send('GET-Old-Path');
+    window.electron.ipcRenderer.once('Old-Path-Data', (event, arg) => {
+      OLD_PATH.value = arg;
+      window.electron.ipcRenderer.send('get-project-name', OLD_PATH.value);
+      window.electron.ipcRenderer.on('get-project-name-reply', (event, arg2) => {
+        Project_Name.value = arg2;
+      });
+    });
+  } else {
+    window.electron.ipcRenderer.send('get-project-name', OLD_PA);
+    window.electron.ipcRenderer.on('get-project-name-reply', (event, arg) => {
+      Project_Name.value = arg;
+    });
+  }
 }
 
 function Title_Name() {
-  // visible_loading.value = true;
   Swal.fire({
     title: "請輸入新的專案名稱",
     input: "text",
@@ -447,7 +474,7 @@ function Title_Name() {
     },
   }).then((result) => {
     if (result.isConfirmed) {
-      window.electron.ipcRenderer.send('change-project-name', Project_Name.value, result.value);
+      window.electron.ipcRenderer.send('change-project-name', result.value);
       Project_Name.value = result.value;
       Swal.fire("專案名稱已更改", "", "success");
     }
@@ -472,11 +499,9 @@ function calculatePosition(time, ttvalue) {
   let Time = parseInt(caltime_sec, 10);
   let position = (Time / 60) * 100;
   let result = (INT_MIN * 100) + Number(roundTo(position, 2).toFixed(2));
-
+  console.log("result", result);
   show_time_bar.value.push(Number(result.toFixed(2)));
-  // console.log("show_time_bar", show_time_bar.value);
 }
-
 function getShowTimeBar(ttvalue) {
   // console.log("ttvalue", ttvalue);
   let SHOW_TIME_BAR = ref([] as any);
@@ -486,27 +511,35 @@ function getShowTimeBar(ttvalue) {
     }
   }
   // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
-
+  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
   return SHOW_TIME_BAR.value;
 }
 
 let isTipVisible = ref(false);
-
-function showTip() {
+let hoveredIndex = ref(0);
+let Hover_Time = ref("");
+function showTip(index, ttvalue) {
+  hoveredIndex.value = index;
   isTipVisible.value = true;
+  window.electron.ipcRenderer.send('get-Specific-Time', index,ttvalue);
+  window.electron.ipcRenderer.once('get-Specific-Time-reply', (event, arg) => {
+    Hover_Time.value = arg;
+  });
 }
 
 function hideTip() {
+  hoveredIndex.value = -1;
   isTipVisible.value = false;
 }
 
 let visible_loading = ref(false);
+let overlayVisible = ref(false);
 
 </script>
 
 <template>
-  <div v-if="visible_loading" class="spinner">
-  </div>
+  <div v-if="overlayVisible" class="overlay"></div>
+  <div v-if="visible_loading" class="spinner"></div>
   <div class="content">
     <div class="title" @click="Title_Name()">{{ Project_Name }}</div>
     <hr>
@@ -564,13 +597,13 @@ let visible_loading = ref(false);
         <div class="Time-bar">
           <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
             :style="{ left: `${value}%` }">
-            <div class="time_bar__line__time__img" @mouseover="showTip" @mouseout="hideTip"
+            <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
               @click="get_ad_information(index, ttvalue)">
               <el-icon :size="20" id="changeTimeButton">
                 <StarFilled />
               </el-icon>
             </div>
-            <div v-if="isTipVisible" id="tips">Look</div>
+            <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
           </div>
         </div>
         <div class="Arrow-Sound">

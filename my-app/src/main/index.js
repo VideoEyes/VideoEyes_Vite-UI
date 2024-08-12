@@ -22,9 +22,9 @@ const path = require('path')
 const { exec } = require('child_process')
 const USER_DATA_PATH = app.getPath('userData')
 const PROJECT_PATH = path.join(USER_DATA_PATH, 'Project_Name')
-const output_json = path.join(PROJECT_PATH, 'json/main.json')
-const Video_PATH = path.join(PROJECT_PATH, 'video')
-const { VertexAI } = require('@google-cloud/vertexai')
+let Constant = {};
+let OLD = "";
+// module.exports = { Project_PATH_Name };
 // var ffmpeg = require('fluent-ffmpeg');
 
 // 主進程
@@ -93,6 +93,47 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+
+  // 選擇專案位置
+  ipcMain.on("ChooseFilePosition", async (event) => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ["openDirectory"]
+      });
+      if (result.canceled) {
+        return;
+      }
+      const path3 = result.filePaths[0];
+      Constant = constants(path3);
+      // console.log("Project_PATH_Name:", path3);
+      console.log("constants:", Constant);
+    } catch (error) {
+      console.error("Error in ChooseFilePosition:", error);
+    }
+  });
+
+
+
+  ipcMain.on('GET-Old-Path', async (event) => {
+    const filePath = path.join(app.getPath('userData'), 'Project_Name', 'PATH.txt');
+    try {
+      const data = await fs.promises.readFile(filePath, 'utf-8');
+      fs.readdir(data, (err, files) => {
+        if (err) {
+          console.error('ERROR:', err);
+          return;
+        }
+        let projectName = files[0];
+        Constant = constants(data, false, projectName);
+      });
+
+      event.reply('Old-Path-Data', data);
+    } catch (err) {
+      console.error('Error reading file:', err);
+      event.reply('Old-Path-Data', 'Error reading file');
+    }
+
+  });
   //copy video file
   ipcMain.on('file', async (event, arg) => {
     const result = await dialog.showOpenDialog({
@@ -100,33 +141,34 @@ app.whenReady().then(() => {
       filters: [{ name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }]
     })
 
+
+
     if (result.filePaths.length === 0) {
       return
     }
     // copy file to output folder
     const input = result.filePaths[0]
     //const USER_DATA_PATH = app.getPath('userData')
-    if (!fs.existsSync(PROJECT_PATH)) {
+    if (!fs.existsSync(Constant.PROJECT_PATH)) {
       console.log('project folder not exist, create one')
-      fs.mkdirSync(PROJECT_PATH)
+      fs.mkdirSync(Constant.PROJECT_PATH)
     }
-    const output = path.join(PROJECT_PATH, 'video')
+    const output = path.join(Constant.PROJECT_PATH, 'video')
     if (!fs.existsSync(output)) {
       console.log('output folder not exist, create one')
       fs.mkdirSync(output)
     }
-    const PR = path.join(output, 'Name')
-    // project name
-    if (!fs.existsSync(PR)) {
-      console.log('output folder not exist, create one')
-      fs.mkdirSync(PR)
-    }
-    const PR_next = path.join(PR, 'Name')
-    if (!fs.existsSync(PR_next)) {
-      console.log('output folder not exist, create one')
-      fs.mkdirSync(PR_next)
-    }
 
+    // 用user data 當作舊檔路徑
+    if (!fs.existsSync(PROJECT_PATH)) {
+      console.log('output folder not exist, create one')
+      fs.mkdirSync(PROJECT_PATH)
+    }
+    const pathFile = path.join(PROJECT_PATH, 'PATH.txt');
+    fs.writeFileSync(pathFile, Constant.PROJECT_PATH.split("\\").slice(0,-1).join('\\'), 'utf8');
+
+
+    //===============
     //rename video file
     const output_file = path.join(output, 'video.mp4')
     fs.copyFile(input, output_file, async (err) => {
@@ -135,7 +177,7 @@ app.whenReady().then(() => {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
-        const videoUri = await gemini_1_5_uploadFile('video.mp4', constants.VIDEO_PATH)
+        const videoUri = await gemini_1_5_uploadFile('video.mp4', Constant.VIDEO_PATH)
         console.log('videoUri: ' + videoUri)
         const audioText = await gemini_1_5_sendMultiModalPromptWithVideo(
           'gemini-rain-py',
@@ -158,12 +200,12 @@ app.whenReady().then(() => {
         } else {
           console.error('No JSON found in the text.')
         }
-        if (fs.existsSync(constants.AUDIO_FOLDER)) {
+        if (fs.existsSync(Constant.AUDIO_FOLDER)) {
           try {
-            await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+            await fs.promises.rm(Constant.AUDIO_FOLDER, { recursive: true, force: true })
             console.log('The folder has been deleted!')
 
-            await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+            await fs.promises.mkdir(Constant.AUDIO_FOLDER, { recursive: true })
             console.log('The folder has been created!')
           } catch (error) {
             console.error('Error clearing and creating folder:', error)
@@ -173,7 +215,7 @@ app.whenReady().then(() => {
         for (let i = 0; i < audioText_json.length; i++) {
           const timestamp = audioText_json[i].time
           const text = audioText_json[i].content
-          await AD_tts(timestamp, text, constants.AUDIO_FOLDER)
+          await AD_tts(timestamp, text, Constant.AUDIO_FOLDER)
         }
         /*
         "AD001": {
@@ -204,7 +246,7 @@ app.whenReady().then(() => {
           }
         }
         console.log('mainJson:', mainJson)
-        fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
+        fs.writeFile(Constant.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
           if (err) {
             console.error('ERROR:', err)
             return
@@ -213,9 +255,9 @@ app.whenReady().then(() => {
         })
 
         await mergeAllAudioToVideo(
-          constants.VIDEO_PATH,
-          constants.AUDIO_FOLDER,
-          constants.OUTPUT_VIDEO_FOLDER
+          Constant.VIDEO_PATH,
+          Constant.AUDIO_FOLDER,
+          Constant.OUTPUT_VIDEO_FOLDER
         )
         event.reply('generate-reply', true)
       }
@@ -227,15 +269,16 @@ app.whenReady().then(() => {
   // 路徑範例: C:\Users\User\AppData\Roaming\my-app
   // 路徑會自動抓
   ipcMain.on('get-video-path', async (event, arg) => {
-    //const USER_DATA_PATH = app.getPath('userData')
-    const output = path.join(PROJECT_PATH, 'video')
+    // console.log('get-video-path Constant:', Constant)
+    const output = path.join(Constant.PROJECT_PATH, 'video')
     const output_file = path.join(output, 'video.mp4')
+    console.log('output_file:', output_file)
     event.returnValue = output_file
   })
 
   ipcMain.on('get-output-video-path', async (event, arg) => {
     //const USER_DATA_PATH = app.getPath('userData')
-    event.returnValue = constants.OUTPUT_VIDEO_PATH
+    event.returnValue = Constant.OUTPUT_VIDEO_PATH
   })
 
   //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
@@ -251,21 +294,21 @@ app.whenReady().then(() => {
   const ffmpeg = require('fluent-ffmpeg')
 
   ipcMain.on('mergeAudioToVideo', async (event) => {
-    if (fs.existsSync(constants.AUDIO_FOLDER)) {
+    if (fs.existsSync(Constant.AUDIO_FOLDER)) {
       try {
-        await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+        await fs.promises.rm(Constant.AUDIO_FOLDER, { recursive: true, force: true })
         console.log('The folder has been deleted!')
 
-        await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+        await fs.promises.mkdir(Constant.AUDIO_FOLDER, { recursive: true })
         console.log('The folder has been created!')
       } catch (error) {
         console.error('Error clearing and creating folder:', error)
       }
     }
     try {
-      const result = await call_readEXE_recursive()
+      const result = await call_readEXE_recursive(Constant)
       if (result) {
-        await finally_video()
+        await finally_video(Constant)
         event.reply('mergeAudioToVideo-reply', true)
       } else {
         console.error('Error: Not all EXE calls completed successfully.')
@@ -282,7 +325,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('write-file', (event, content) => {
-    fs.readFile(output_json, 'utf8', (err, data) => {
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('Error reading file:', err)
         return
@@ -330,7 +373,7 @@ app.whenReady().then(() => {
       const updatedJsonData = JSON.stringify(sortedJson, null, 4)
       //////
       // console.log("updatedJsonData", updatedJsonData);
-      fs.writeFile(output_json, updatedJsonData, 'utf8', (err2) => {
+      fs.writeFile(Constant.OUTPUT_JSON_PATH, updatedJsonData, 'utf8', (err2) => {
         if (err2) {
           console.error('ERROR:', err2)
           return
@@ -340,8 +383,9 @@ app.whenReady().then(() => {
     })
   })
 
-  ipcMain.on('read-file', (event, filePath) => {
-    fs.readFile(output_json, 'utf8', (err, data) => {
+  ipcMain.on('read-file', async (event, filePath) => {
+    console.log("546545",Constant)
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
@@ -359,7 +403,7 @@ app.whenReady().then(() => {
   ipcMain.on('check-AD-choice', (event, now_Selected_AD) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
     // console.log("ad_index",typeof ad_index);
-    fs.readFile(output_json, 'utf8', (err, data) => {
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
@@ -377,7 +421,7 @@ app.whenReady().then(() => {
   ipcMain.on('change-AD-choice', (event, now_Selected_AD, ad_index) => {
     // console.log("now_Selected_AD",typeof now_Selected_AD);
     // console.log("ad_index",typeof ad_index);
-    fs.readFile(output_json, 'utf8', (err, data) => {
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
@@ -400,7 +444,7 @@ app.whenReady().then(() => {
       const updatedJsonData = JSON.stringify(sortedJson, null, 4)
       //////
 
-      fs.writeFile(output_json, updatedJsonData, 'utf8', (err2) => {
+      fs.writeFile(Constant.OUTPUT_JSON_PATH, updatedJsonData, 'utf8', (err2) => {
         if (err2) {
           console.error('ERROR:', err2)
           return
@@ -411,7 +455,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('delete_write_file', (event, content) => {
-    fs.readFile(output_json, 'utf8', (err, data) => {
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
@@ -419,7 +463,7 @@ app.whenReady().then(() => {
       const jsonData = JSON.parse(data)
       delete jsonData[content]
       const jsonArray = Object.entries(jsonData)
-      fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => {
+      fs.writeFile(Constant.OUTPUT_JSON_PATH, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => {
         if (err2) {
           console.error('ERROR:', err2)
           return
@@ -433,7 +477,7 @@ app.whenReady().then(() => {
     'save_AD',
     (event, NOW_select_AD_name_value, textareaValue_value, NOW_Ad_Choice, time1, time2, tim3) => {
       // console.log('save_AD:', content);
-      fs.readFile(output_json, 'utf8', (err, data) => {
+      fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
         if (err) {
           console.error('ERROR:', err)
           return
@@ -447,7 +491,7 @@ app.whenReady().then(() => {
         jsonData[NOW_select_AD_name_value]['scene-start-time'] = time1
         jsonData[NOW_select_AD_name_value]['scene-end-time'] = time2
         jsonData[NOW_select_AD_name_value]['AD-start-time'] = tim3
-        fs.writeFile(output_json, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => { })
+        fs.writeFile(Constant.OUTPUT_JSON_PATH, JSON.stringify(jsonData, null, 4), 'utf8', (err2) => { })
       })
     }
   )
@@ -455,7 +499,7 @@ app.whenReady().then(() => {
   ipcMain.on('get_SceneData', (event, scene_start) => {
     let sceneData = scene_start
 
-    fs.readFile(output_json, 'utf8', (err, data) => {
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
@@ -480,20 +524,20 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('start_gemini', async (event, arg) => {
-    gemini_process_all(output_json, event)
+    gemini_process_all(Constant.OUTPUT_JSON_PATH, event)
   })
 
   ipcMain.on('read-AD', async (event, arg, choice, theName) => {
     // console.log("arg", arg, choice,theName);
-    call_readEXE(arg, choice, theName)
+    call_readEXE(arg, choice, theName, 0, Constant)
   })
 
   const path = require('path')
   const { exec } = require('child_process')
 
   ipcMain.on('regen-AD', async (event, name, start, end, timestamp) => {
-    const input = path.join(PROJECT_PATH, 'video/video.mp4')
-    const output = path.join(PROJECT_PATH, 'video', `${name}.mp4`)
+    const input = path.join(Constant.PROJECT_PATH, 'video/video.mp4')
+    const output = path.join(Constant.PROJECT_PATH, 'video', `${name}.mp4`)
     const cmd = `"${video_cutEXE}" "${input}" "${output}" "${start}" "${end}"`
 
     console.log('cmd:', cmd)
@@ -516,40 +560,71 @@ app.whenReady().then(() => {
         event.reply('regen-AD-reply', 'Fail')
       }
     })
+
   })
 
   ipcMain.on('read-All-AD', async (event) => {
-    call_readEXE_recursive()
+    call_readEXE_recursive(Constant)
   })
 
-  ipcMain.on('get-project-name', (event) => {
-    // console.log('get-project-name')
-    const projectName_PATH = path.join(PROJECT_PATH, 'video/Name')
-    fs.readdir(projectName_PATH, 'utf8', (err, data) => {
+  ipcMain.on('get-Specific-Time', async (event,index,ttvalue) => {
+    console.log(Constant.OUTPUT_JSON_PATH)
+    fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('ERROR:', err)
         return
       }
-      event.reply('get-project-name-reply', data[0])
+      const jsonData = JSON.parse(data)
+      const jsonDataArray = Object.values(jsonData)
+      let all = [];
+      // console.log('jsonDataArray:', jsonDataArray)
+      for(let i = 0; i < jsonDataArray.length; i++){
+        all[i] = jsonDataArray[i]["scene-start-time"];
+      }
+      const filteredTimes = all.filter(time => time.startsWith(`00:${(ttvalue-1).toString().padStart(2, '0')}:`));
+      // console.log('filteredTimes:', filteredTimes)
+      event.reply('get-Specific-Time-reply', filteredTimes[index])
+      // console.log('all:', all)
     })
   })
 
-  
+  ipcMain.on('get-project-name', async (event, OLD_PATH) => {
+    fs.readdir(OLD_PATH, (err, files) => {
+      if (err) {
+        console.error('ERROR:', err)
+        return
+      }
+      let projectName = files[0]
+      console.log('projectName:', projectName)
+      Constant = constants(OLD_PATH,false,projectName);
+      event.reply('get-project-name-reply', projectName);
+
+    })
+
+  })
+
+
 
   // 更改title name
-  ipcMain.on('change-project-name', (event,Now_project, newName) => {
-    // console.log('Now_project:', Now_project,newName);
-    const oldProjectNamePath = path.join(PROJECT_PATH, 'video/Name',Now_project);
-    const newProjectNamePath = path.join(PROJECT_PATH, 'video/Name', newName);
+  ipcMain.on('change-project-name', (event, newName) => {
+    const pathParts = Constant.PROJECT_PATH.split(path.sep);
+    const parentPath = pathParts.slice(0, -1).join(path.sep);
+
+    console.log('Constant.PROJECT_PATH:', parentPath)
+    const oldProjectNamePath = Constant.PROJECT_PATH
+    const newProjectNamePath = path.join(parentPath, newName);
 
     fs.rename(oldProjectNamePath, newProjectNamePath, (err) => {
-        if (err) {
-            console.error('ERROR:', err);
-            return;
-        }
-        console.log('專案名稱已更改');
+      if (err) {
+        console.error('ERROR:', err);
+        return;
+      }
+      console.log('專案名稱已更改');
     });
-});
+    console.log('INIT Constant:',Constant)
+    Constant = constants(newProjectNamePath, true, newName);
+    console.log('change Constant:', Constant)
+  });
 
 })
 
@@ -560,7 +635,7 @@ async function gemini_with_scene(name, videoPath) {
   return await gemini_1_5_sendMultiModalPromptWithVideo(
     'gemini-rain-py',
     'us-central1',
-    constants.GEMINI_MODEL,
+    Constant.GEMINI_MODEL,
     uri,
     '創建一個簡短的口述影像描述。儘量貼近原作品再現的原則。無須描述對話。',
     '你是專業的口述影像搞生成器，以旁白角度轉寫講稿，不要使用畫面中等詞彙'
@@ -569,7 +644,7 @@ async function gemini_with_scene(name, videoPath) {
 
 function call_pySceneDetect(event) {
   console.log(mainPy)
-  const output_json = path.join(PROJECT_PATH, 'json/main.json')
+  const output_json = path.join(Constant.PROJECT_PATH, 'json/main.json')
   // const output_image = path.join(USER_DATA_PATH, 'image');
 
   const output_json_folder = path.dirname(output_json)
@@ -584,13 +659,13 @@ function call_pySceneDetect(event) {
   const psdEXEPath = mainEXE
   const psdPyPath = mainPy
 
-  const inputVideo = path.join(PROJECT_PATH, 'video/video.mp4')
+  const inputVideo = path.join(Constant.PROJECT_PATH, 'video/video.mp4')
 
   // const inputVideo = path.join(__dirname, '../../input/net.mp4'); //要改????.mp4
 
   const MIN_SCENE_LEN = 10
   // const cmd = `"${psdEXEPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`
-  const cmd = `python "${psdPyPath}" "${inputVideo}" "${output_json}" "${MIN_SCENE_LEN}" "${constants.CLIPS_FOLDER}"`
+  const cmd = `python "${psdPyPath}" "${inputVideo}" "${Constant.OUTPUT_JSON_PATH}" "${MIN_SCENE_LEN}" "${Constant.CLIPS_FOLDER}"`
 
   exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
@@ -639,12 +714,12 @@ async function gemini_process_all(AD_json, event) {
     const jsonData = JSON.parse(data)
     const jsonIndex = Object.keys(jsonData)
     for (const key of jsonIndex) {
-      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4')
+      const filePath = path.join(Constant.CLIPS_FOLDER, key + '.mp4')
       const uri = await gemini_uploadFile(key + '.mp4', filePath)
       const response = await gemini_sendMultiModalPromptWithVideo(
         'gemini-rain-py',
         'us-central1',
-        constants.GEMINI_MODEL,
+        Constant.GEMINI_MODEL,
         uri
       )
       jsonData[key]['AD-content'][0] = response
