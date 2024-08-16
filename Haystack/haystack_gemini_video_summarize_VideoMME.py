@@ -1,7 +1,8 @@
 #%%
+from vertexai.generative_models import Part, SafetySetting, HarmCategory, HarmBlockThreshold
 import pandas as pd
 from haystack_integrations.components.generators.google_vertex import VertexAIGeminiGenerator
-from vertexai.generative_models import Part, SafetySetting, HarmCategory, HarmBlockThreshold
+from vertexai.generative_models import Part
 import json
 import random
 import pydantic
@@ -12,14 +13,15 @@ from haystack import component
 import re
 from haystack.components.builders import PromptBuilder
 from haystack import Pipeline
+import numpy as np
+import json
 
 prompt_template = """
-Videro Summary:
+Video Summary:
 {{ summary[0] }}
 
 Select the best answer to the following multiple-choice question based on the video. Respond with only the letter (A, B, C, or D) of the correct option. 
 {{ question }}
-
 The best answer is:
 """
 
@@ -42,7 +44,6 @@ class AddVideo2Prompt:
 
     @component.output_types(prompt=list)
     def run(self, uri: str, prompt: str):
-        print(prompt)
         return {"prompt": [Part.from_uri(uri, mime_type="video/mp4"),prompt]}
 
 
@@ -59,6 +60,10 @@ class GeminiGenerator:
         self.location = location
         self.model = model
     
+    # @component.output_types(replies=List[str])
+    # def run(self, prompt: List):
+    #     generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model)
+    #     return {"replies": generator.run(prompt)["replies"]}
     @component.output_types(replies=List[str])
     def run(self, prompt: List):
         safety_config = [
@@ -71,7 +76,8 @@ class GeminiGenerator:
         generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, safety_settings=safety_config)
         return {"replies": generator.run(prompt)["replies"]}
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-preview-0514")
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash-001")
+# gemini-1.5-pro-preview-0514
 
 summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash-001")
 
@@ -118,14 +124,20 @@ pipeline.connect("add_video.prompt", "llm")
 #%%
 df = pd.read_parquet("hf://datasets/lmms-lab/Video-MME/videomme/test-00000-of-00001.parquet")
 # video_id = df[df['duration'] == 'short']['video_id'].unique()
-video_id = ['104']
+# video_id = [136,194,266,278] #104
+
+video_id = [f"{i:03}" for i in range(362,601)]
+# print(video_id)
+# video_id = ['007']
 output = []
 
-
-
+#missing 29
 
 for id in video_id:
-    path = f"./data/{df[df['video_id'] == id]['videoID'].unique()[0]}.mp4"
+    output.clear()
+    print(id)
+    path = f"D:/Else/data/{df[df['video_id'] == id]['videoID'].unique()[0]}.mp4"
+    print(path)
     video_dict = {
         "video_id": "",
         "duration": "",
@@ -150,26 +162,32 @@ for id in video_id:
         question_dict["question_id"] = row['question_id']
         question_dict["task_type"] = row['task_type']
         question_dict["question"] = row['question']
-        question_dict["options"] = row['options']
+        question_dict["options"] = np.array(row['options']).tolist()
         question_dict["answer"] = row['answer']
-
-        q = row['question'] + " " + "\n".join(row['options'])
-
-        result = pipeline.run({
-            "upload2gcs": { "file_path": path},
-            "prompt_builder": {"question": q},
-        })
-
-        question_dict["response"] = result['llm']['replies'][0]
-
-        video_dict["questions"].append(question_dict)
-
+        try:
+            q = row['question'] + " " + "\n".join(row['options'])
+            print(row['question'])
+            result = pipeline.run({
+                "upload2gcs": { "file_path": path},
+                "prompt_builder": {"question": q},
+            })
+            
+            print("RESULT:",result)
+            
+            question_dict["response"] = result['llm']['replies'][0]
+            video_dict["questions"].append(question_dict)
+        except Exception as e:
+            print(e)
+            with open('error.txt', 'a', encoding='utf-8') as file:
+                text_to_append = id+"\n"
+                # 將文字寫入文件
+                file.write(text_to_append)
+            break
     output.append(video_dict)
-    print(video_dict)
-# %%
-# json
-import json
-o = {"data": output}
-with open('data.json', 'w') as f:
-    json.dump(o, f)
+#字典
+
+#轉成json字串
+    file_path = "./dataM/questions_data("+id+").json"
+    with open(file_path, "w", encoding="utf-8") as file:
+        json.dump(output, file, ensure_ascii=False, indent=4)
 # %%
