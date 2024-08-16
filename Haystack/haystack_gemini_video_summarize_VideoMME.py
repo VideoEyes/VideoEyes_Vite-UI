@@ -136,7 +136,7 @@ output = []
 for id in video_id:
     output.clear()
     print(id)
-    path = f"D:/Else/data/{df[df['video_id'] == id]['videoID'].unique()[0]}.mp4"
+    path = f"./data/{df[df['video_id'] == id]['videoID'].unique()[0]}.mp4"
     print(path)
     video_dict = {
         "video_id": "",
@@ -187,7 +187,7 @@ for id in video_id:
 #字典
 
 #轉成json字串
-    file_path = "./dataM/questions_data("+id+").json"
+    file_path = "./output/questions_data("+id+").json"
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(output, file, ensure_ascii=False, indent=4)
 # %%
