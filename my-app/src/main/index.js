@@ -141,8 +141,6 @@ app.whenReady().then(() => {
       filters: [{ name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }]
     })
 
-
-
     if (result.filePaths.length === 0) {
       return
     }
@@ -279,6 +277,7 @@ app.whenReady().then(() => {
   ipcMain.on('get-output-video-path', async (event, arg) => {
     //const USER_DATA_PATH = app.getPath('userData')
     event.returnValue = Constant.OUTPUT_VIDEO_PATH
+    event.reply('get-output-video-path-reply', Constant.PROJECT_PATH)
   })
 
   //收到start_PySceneDetect的訊息後，執行call_pySceneDetect
