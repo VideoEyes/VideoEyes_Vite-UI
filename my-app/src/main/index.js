@@ -600,36 +600,62 @@ app.on('window-all-closed', () => {
  */
 
 async function gemini_process_all(AD_json, event) {
-  //read json file
-  const fs = require('fs')
-  const path = require('path')
-  //path: AD_json
+  const fs = require('fs');
+  const path = require('path');
+  const exec = require('child_process').exec;
+  
   fs.readFile(AD_json, 'utf8', async (err, data) => {
     if (err) {
-      console.error('ERROR:', err)
-      return
+      console.error('ERROR:', err);
+      return;
     }
-    const jsonData = JSON.parse(data)
-    const jsonIndex = Object.keys(jsonData)
+    const jsonData = JSON.parse(data);
+    const jsonIndex = Object.keys(jsonData);
+
     for (const key of jsonIndex) {
-      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4')
-      const uri = await gemini_uploadFile(key + '.mp4', filePath)
-      const response = await gemini_sendMultiModalPromptWithVideo(
-        'gemini-rain-py',
-        'us-central1',
-        constants.GEMINI_MODEL,
-        uri
-      )
-      jsonData[key]['AD-content'][0] = response
-      console.log('key:', key, 'response:', response)
-      // 暫停1分鐘
-      await new Promise((resolve) => setTimeout(resolve, 35000))
+      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
+      const cmd = `python "${haystack_gemini_summrize}" "${filePath}" "${constants.GEMINI_OUTPUT_PATH}"`;
+
+      await new Promise((resolve, reject) => {
+        exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
+          if (error) {
+            console.error(`error: ${error}`);
+            reject(error);
+            return;
+          }
+
+          // 读取 gemini_result.json 文件
+          fs.readFile(constants.GEMINI_OUTPUT_PATH, 'utf8', (err, data) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            const response = JSON.parse(data);
+            jsonData[key]['AD-content'][0] = response['Audiodescription'];
+
+            console.log('key:', key, 'response:', response);
+
+            resolve();
+          });
+        });
+      });
+
+      // 暂停 35 秒
+      await new Promise((resolve) => setTimeout(resolve, 35000));
     }
-    console.log('jsonData:', jsonData)
+
+    // 保存文件
     fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
-      if (err) return 'FAIL'
-      console.log('The file has been saved!')
-      event.reply('gemini_end', 'Success')
-    })
-  })
+      if (err) {
+        console.error('ERROR:', err);
+        event.reply('gemini_end', 'FAIL');
+        return;
+      }
+      console.log('The file has been saved!');
+      event.reply('gemini_end', 'Success');
+    });
+  });
 }
+
+

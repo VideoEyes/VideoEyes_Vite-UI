@@ -66,7 +66,7 @@ class GeminiGenerator:
         generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, safety_settings=safety_config)
         return {"replies": generator.run(prompt)["replies"]}
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash-001")
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-001")
 
 from google.cloud import storage
 @component
@@ -107,7 +107,7 @@ df = pd.read_parquet("hf://datasets/lmms-lab/Video-MME/videomme/test-00000-of-00
 
 # video_id = [f"{i:03}" for i in range(362,601)]
 # print(video_id)
-video_id = ['007']
+video_id = ['166','211','212','213','214','215','266']
 output = []
 
 for id in video_id:
@@ -150,7 +150,7 @@ for id in video_id:
             })
             
             print("RESULT:",result)
-            
+            print("Error:",result.get("error"))
             question_dict["response"] = result['llm']['replies'][0]
             video_dict["questions"].append(question_dict)
         except Exception as e:
@@ -164,7 +164,7 @@ for id in video_id:
 #字典
 
 #轉成json字串
-    file_path = "./output/questions_data("+id+").json"
+    file_path = "E:/VideoMME/output/questions_data("+id+").json"
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(output, file, ensure_ascii=False, indent=4)
 # %%

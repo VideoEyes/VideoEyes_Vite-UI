@@ -103,6 +103,7 @@ upload2gcs = upload2GCS(bucket_name="gemini-ad-gen")
 
 pipeline = Pipeline(max_loops_allowed=5)
 
+
 # Add components to your pipeline
 pipeline.add_component(instance=upload2gcs, name="upload2gcs")
 pipeline.add_component(instance=summary_prompt_builder, name="summary_prompt_builder")
