@@ -4,18 +4,18 @@ import { toRefs, reactive, ref, onMounted, watchEffect } from 'vue'
 import { useWindowSize } from "@vueuse/core";
 import listen from "../picture/listen.png"
 import store from "../picture/store.png"
-import hint from "../picture/ask.png"
-import iconUrl from "../picture/Hint.png"
 import "../assets/edit.css"
 import { app, protocol, net, BrowserWindow, ipcRenderer } from 'electron'
 import path from 'node:path'
+import { useRoute } from 'vue-router';
 import router from '../router';
 import Swal from 'sweetalert2';
 
+let OLD_PATH = ref(''); // 使用 `ref` 來存儲 `OLD_PATH`
 import {
   ArrowLeft,
   ArrowRight,
-  StarFilled ,
+  StarFilled,
   Delete,
   Edit,
   Share,
@@ -29,17 +29,24 @@ let sceneStart_with_index = ref([] as any);
 let sceneStart: any = ref({});
 let KEY_main_json = ref([] as any);
 let FIRST_come_in_system = ref(true);
+let Project_Name = ref("專案名稱");
 
-onMounted(() => {
 
-  // window.onbeforeunload = (event) => {
-  //   event.preventDefault();
-  //   console.log("I want to close the window");
-  //   window.electron.ipcRenderer.send('window-close', JSON.stringify(all_information));
-  // }
+onMounted(async () => {
+  const route = useRoute();
+  const query = route.query.data as string;
+  if (query) {
+    OLD_PATH.value = query;
+    console.log("OLD_PATH", OLD_PATH.value);
+    await Get_Title_name(OLD_PATH.value);
+
+  } else {
+    await Get_Title_name("");
+  }
   const video = document.getElementById('video') as HTMLSourceElement;
+  const video_path = await window.electron.ipcRenderer.sendSync('get-video-path');
 
-  const video_path = window.electron.ipcRenderer.sendSync('get-video-path');
+  console.log("video_path", video_path);
   video.src = video_path;
   let videoElement = document.querySelector('video') as HTMLVideoElement;
   videoElement.onloadedmetadata = () => {
@@ -53,11 +60,15 @@ onMounted(() => {
 import ffmpeg from 'fluent-ffmpeg';
 
 function mergeAudioToVideo() {
+  visible_loading.value = true;
+  overlayVisible.value = true;
   // console.log("mergeAudioToVideo");
   window.electron.ipcRenderer.send('mergeAudioToVideo');
   window.electron.ipcRenderer.once('mergeAudioToVideo-reply', (event, arg) => {
     console.log(arg); // 輸出來自主進程的回覆
     if (arg) {
+      visible_loading.value = false;
+      overlayVisible.value = false;
       router.push('/outputPreview');
     } else {
       console.error('Error reading file:', arg.error);
@@ -102,10 +113,7 @@ function initialalize() {
     }
   });
 }
-const AD_cursor = document.getElementById('ALL') as HTMLSourceElement;
-//=======================
 
-let AD_ALL_time = ref({} as any);
 let textareaValue = ref('');
 
 const Toast_add = Swal.mixin({
@@ -133,6 +141,7 @@ const Toast_delete = Swal.mixin({
 });
 
 function read_AD() {
+  visible_loading.value = true;
   if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
@@ -140,10 +149,14 @@ function read_AD() {
     });
     return;
   }
+
   window.electron.ipcRenderer.send('read-AD', KEY_main_json.value[nowSelectedAD], nowAdChoice, sceneStart[KEY_main_json.value[nowSelectedAD]]);
+  visible_loading.value = false;
 }
 
 function regen_AD() {
+  visible_loading.value = true;
+  overlayVisible.value = true;
   if (nowSelectedAD == null) {
     Swal.fire({
       icon: "error",
@@ -159,7 +172,14 @@ function regen_AD() {
     console.log(arg); // 輸出來自主進程的回覆
     textareaValue.value = arg;
     save_AD();
+    visible_loading.value = false;
+    overlayVisible.value = false;
+    Swal.fire({
+      icon: "success",
+      title: "語音生成完成",
+    });
   });
+
 }
 
 function new_AD() {
@@ -199,7 +219,7 @@ function save_AD() {
     // let data = [NOW_select_AD_name.value, textareaValue.value];
     // console.log("data to be sent", data);
     window.electron.ipcRenderer.send('save_AD', nowSelectedADIndex, textareaValue.value, nowAdChoice, timeSettings.value[0].value, timeSettings.value[1].value, timeSettings.value[2].value);
-    window.location.reload();
+    // window.location.reload();
   }
 
 }
@@ -271,8 +291,6 @@ function change_AD_choice(index) {
     });
   }
 }
-
-
 //=======================
 
 const state = reactive({
@@ -314,41 +332,13 @@ const toggleWindow = (window) => {
 };
 let ttvalue = ref(1);
 let totaltime = ref(0);
-let mousePosition = ref({ x: 0, y: 0 });
-let now_video_time = ref(0);
-let hoverInfoFlex = ref(1);
 
-function handleMouseMove(event) {
-  let rect = event.target.getBoundingClientRect();
-  mousePosition.value = {
-    x: ((event.clientX - rect.left) / rect.width) * 100,
-    y: ((event.clientY - rect.top) / rect.height) * 100,
-  };
-  // 1分鐘
-  now_video_time.value = Math.round(((ttvalue.value - 1) * 60 + mousePosition.value.x * 60 / 100) * 100) / 100;
-
-  if ((ttvalue.value == Math.ceil(totaltime.value / 60)) && totaltime.value != ttvalue.value * 60) {
-    const last = totaltime.value - (ttvalue.value - 1) * 60;
-    hoverInfoFlex.value = last / 60;
-  } else {
-    hoverInfoFlex.value = 1;
-  }
-
-}
-
-// function check_AD_Choice22222() {
-//   console.log("check_AD_Choice");
-//   for (let i = 0; i < windows.value.length; i++) {
-//     windows.value[i].color = 'rgb(255,255,255)'
-//   }
-//   windows.value[0].color = 'rgb(0,0,0)'
-// }
 
 function check_AD_choice() {
   if (nowSelectedAD != null) {
     window.electron.ipcRenderer.send('check-AD-choice', nowSelectedAD);
     window.electron.ipcRenderer.once('now_Selected_AD-reply', (event, arg) => {
-      console.log(arg); // 輸出來自主進程的回覆
+      // console.log(arg); // 輸出來自主進程的回覆
       for (let i = 0; i < windows.value.length; i++) {
         windows.value[i].color = 'rgb(255,255,255)'
       }
@@ -372,12 +362,12 @@ function get_ad_information(index, ttvalue) {
   check_AD_choice(); //檢查現在選擇的AD，改變顏色用
   // 要給存AD的 AD name
   NOW_select_AD_name.value = "AD" + index;
-  console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
+  // console.log("NOW_select_AD_nameBB", NOW_select_AD_name);
   let scene_start = sceneStart_with_index.value[index];
   window.electron.ipcRenderer.send('get_SceneData', scene_start);
   window.electron.ipcRenderer.once('get_SceneData-reply', (event, arg) => {
     scene_output_video.value = arg.data["index"];
-    console.log("scene_output_video", scene_output_video);
+    // console.log("scene_output_video", scene_output_video);
     if (arg.success) {
       if (delete_flag.value) {
         delete_flag.value = false;
@@ -419,6 +409,27 @@ function get_ad_information(index, ttvalue) {
       timeSettings.value[0].value = arg.data["scene-start-time"];
       timeSettings.value[1].value = arg.data["scene-end-time"];
       timeSettings.value[2].value = arg.data["AD-start-time"];
+      const Total_changeTimeButton = timeSettings.value[0].value.split(":");
+      const changeTimeButton = document.getElementById('changeTimeButton');
+      let QW = ref(0);
+      for (let i = 0; i < Total_changeTimeButton.length; i++) {
+        if (i == 0) {
+          QW.value += parseInt(Total_changeTimeButton[i]) * 3600;
+        } else if (i == 1) {
+          QW.value += parseInt(Total_changeTimeButton[i]) * 60;
+        } else {
+          QW.value += parseFloat(Total_changeTimeButton[i]);
+        }
+      }
+      if (changeTimeButton) {
+        const video = document.getElementById('video') as HTMLVideoElement;
+        const newTime = Number(QW.value);
+        if (!isNaN(newTime) && isFinite(newTime)) {
+          video.currentTime = newTime;
+        } else {
+          console.error('無效數字', QW.value);
+        }
+      }
       nowAdChoice = arg.data["AD-content-ID"];
       textareaValue.value = arg.data["AD-content"][nowAdChoice];
       nowSelectedADIndex = arg.data["index"];
@@ -429,6 +440,46 @@ function get_ad_information(index, ttvalue) {
   });
 }
 
+async function Get_Title_name(OLD_PA) {
+  // console.log("OLD_PA", que);
+
+  if (OLD_PA == "" || OLD_PA == null || OLD_PA == undefined) {
+    window.electron.ipcRenderer.send('GET-Old-Path');
+    window.electron.ipcRenderer.once('Old-Path-Data', (event, arg) => {
+      OLD_PATH.value = arg;
+      window.electron.ipcRenderer.send('get-project-name', OLD_PATH.value);
+      window.electron.ipcRenderer.on('get-project-name-reply', (event, arg2) => {
+        Project_Name.value = arg2;
+      });
+    });
+  } else {
+    window.electron.ipcRenderer.send('get-project-name', OLD_PA);
+    window.electron.ipcRenderer.on('get-project-name-reply', (event, arg) => {
+      Project_Name.value = arg;
+    });
+  }
+}
+
+function Title_Name() {
+  Swal.fire({
+    title: "請輸入新的專案名稱",
+    input: "text",
+    showCancelButton: true,
+    confirmButtonText: "確認",
+    cancelButtonText: "取消",
+    inputValidator: (value) => {
+      if (!value) {
+        return "請輸入專案名稱";
+      }
+    },
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.electron.ipcRenderer.send('change-project-name', result.value);
+      Project_Name.value = result.value;
+      Swal.fire("專案名稱已更改", "", "success");
+    }
+  });
+}
 
 function roundTo(num, decimal) {
   return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal);
@@ -448,158 +499,129 @@ function calculatePosition(time, ttvalue) {
   let Time = parseInt(caltime_sec, 10);
   let position = (Time / 60) * 100;
   let result = (INT_MIN * 100) + Number(roundTo(position, 2).toFixed(2));
-
+  console.log("result", result);
   show_time_bar.value.push(Number(result.toFixed(2)));
-  // console.log("show_time_bar", show_time_bar.value);
 }
-
 function getShowTimeBar(ttvalue) {
+  // console.log("ttvalue", ttvalue);
   let SHOW_TIME_BAR = ref([] as any);
   for (let i = 0; i < show_time_bar.value.length; i++) {
     if (show_time_bar.value[i] < ttvalue * 100 && show_time_bar.value[i] >= (ttvalue - 1) * 100) {
-      SHOW_TIME_BAR.value.push(show_time_bar.value[i]); // 修改這裡
+      SHOW_TIME_BAR.value.push(show_time_bar.value[i] - ((ttvalue - 1) * 100)); // 修改這裡
     }
   }
-  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR);
+  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
+  // console.log("SHOW_TIME_BAR", SHOW_TIME_BAR.value);
   return SHOW_TIME_BAR.value;
 }
 
-// async function re_read_AD() {
-//   await window.electron.ipcRenderer.send('read-All-AD');
-//   mergeAudioToVideo();
-// }
+let isTipVisible = ref(false);
+let hoveredIndex = ref(0);
+let Hover_Time = ref("");
+function showTip(index, ttvalue) {
+  hoveredIndex.value = index;
+  isTipVisible.value = true;
+  window.electron.ipcRenderer.send('get-Specific-Time', index,ttvalue);
+  window.electron.ipcRenderer.once('get-Specific-Time-reply', (event, arg) => {
+    Hover_Time.value = arg;
+  });
+}
+
+function hideTip() {
+  hoveredIndex.value = -1;
+  isTipVisible.value = false;
+}
+
+let visible_loading = ref(false);
+let overlayVisible = ref(false);
 
 </script>
 
 <template>
+  <div v-if="overlayVisible" class="overlay"></div>
+  <div v-if="visible_loading" class="spinner"></div>
   <div class="content">
-    <div class="title">Project Name</div>
+    <div class="title" @click="Title_Name()">{{ Project_Name }}</div>
     <hr>
-    <div class="top">
-      <div class="top__left">
-        <div class="left_title">
-          <div class="edit-button">
-            <div class="ATool">
-              <div class="ad_tool_add" id="new_AD" @click="new_AD()">新增</div>
-              <div class="ad_tool_add" id="delete_AD" @click="delete_AD_hint()">刪除</div>
-              <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
-              <div class="ad_tool_add" id="" @click="mergeAudioToVideo()">匯出</div>
-              <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
-            </div>
-            <!-- <el-button type="primary" id="new_AD" @click="new_AD()">新增</el-button>
-            <el-button type="danger" id="delete_AD" @click="delete_AD_hint()">刪除</el-button>
-            <el-button type="danger" id="read_AD" @click="read_AD()">生成語音</el-button>
-            <el-button type="danger" id="" @click="re_read_AD()">生成全部語音</el-button>
-            <el-button type="danger" id="" @click="router.push('/outputPreview')">去output</el-button> -->
-          </div>
-        </div>
-        <div class="left_container">
-        </div>
-      </div>
-      <div class="top__middle">
-        <video controls>
-          <source id="video" src="" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-      <div class="top__right">
-        <div class="right_title">
-          <span>AD 參數設定</span>
-        </div>
-        <div class="ad_content_wrpaer">
-          <div class="ad_time_addcontent" v-for="(timeSetting, index) in timeSettings" :key="index">
-            <input type="text" class="ad_time" v-model="timeSetting.value" :placeholder="timeSetting.placeholder"
-              required>
-            <div class="underline"></div>
-            <label>{{ timeSetting.label }}</label>
-          </div>
-        </div>
-        <hr>
-        <div class="wrpaer_ad">
-          <div class="new_window">
-            <div class="window" v-for="window in windows" :key="window.id" :id="window.id"
-              :style="{ backgroundColor: window.color }" @click="toggleWindow(window)">
-              <span class="number">{{ window.number }}</span>
-            </div>
-          </div>
-          <hr>
-          <hr>
-          <hr>
-          <div class="write_ad">
-            <form action="/test.aspx" method="post">
-              <textarea class="textarea_size" v-model="textareaValue" style="resize:none; " placeholder=""></textarea>
-            </form>
-          </div>
-          <div class="ad_tool">
-            <div class="Tool">
-              <div class="ad_tool_add" @click="regen_AD">Gemini</div>
-              <div class="ad_tool_add" @click="read_AD">試聽</div>
-            </div>
-            <!-- <div class = "Tool">
-              <div class="ad_tool_add" @click="Store_AD">要新增</div>
-              <div class="ad_tool_add">要刪除</div>
-            </div> -->
-            <div class="Tool">
-              <div class="ad_tool_add" @click="">
-                刪除</div>
-              <div class="ad_tool_add" @click="save_AD">儲存</div>
-            </div>
-            <!-- <div class = "Tool">
-              <div class="ad_tool_add"
-                @click="mergeAudioToVideo('D:\\Download\\chinobio.mp4', 'D:\\Download\\TESTT.mp3', 'D:\\Download\\AAAA.mp4', scene_output_video)">
-                輸出檔案</div>
-              <div class="ad_tool_add" @click="save_AD">存檔口述</div>
-            </div> -->
-          </div>
-        </div>
-      </div>
+    <div class="Outside-functional-Tool">
+      <div class="Outside-functional-Tool-Btn" id="new_AD" @click="new_AD()">新增(A)</div>
+      <!-- <div class="Outside-functional-Tool-Btn" id="delete_AD" @click="delete_AD_hint()">刪除(D)</div> -->
+      <!-- <div class="ad_tool_add" id="read_AD" @click="read_AD()">生成語音</div> -->
+      <div class="Outside-functional-Tool-Btn" id="" @click="mergeAudioToVideo()">匯出(O)</div>
+      <!-- <div class="ad_tool_add"id="" @click="router.push('/outputPreview')">去output</div> -->
     </div>
-    <!-- <p v-for="(value, index) in getShowTimeBar()" :key="index">
-      {{ value }}
-    </p> -->
-    <div class="time_bar">
-      <div class="time_bar__line">
-        <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
-          :style="{ left: `${value}%` }">
-          <div class="time_bar__line__time__line"></div>
-          <!-- <div class="time_bar__line__time__text">{{ index }}</div> -->
-          <div class="time_bar__line__time__img" @click="get_ad_information(index, ttvalue)">
-            <el-icon :size="25">
-              <StarFilled  />
+    <hr>
+    <div class="container">
+      <div class="top">
+        <div class="Video">
+          <video controls id="video">
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div class="AD-Fixed">
+          <div class="AD-Title">
+            AD Reference Setting
+          </div>
+          <div class="AD-content-reference" v-for="(timeSetting, index) in timeSettings" :key="index">
+            <div class="input-group">
+              <input type="text" class="ad_time" v-model="timeSetting.value" :placeholder="timeSetting.placeholder"
+                required>
+              <label for="">{{ timeSetting.label }}</label>
+            </div>
+          </div>
+          <hr>
+          <div class="wrpaer_ad">
+            <div class="now-window-group">
+              <div class="window" v-for="window in windows" :key="window.id" :id="window.id"
+                :style="{ backgroundColor: window.color }" @click="toggleWindow(window)">
+                <span>{{ window.number }}</span>
+              </div>
+            </div>
+            <div class="AD-write">
+              <form action="/test.aspx" method="post">
+                <textarea v-model="textareaValue" required></textarea>
+              </form>
+            </div>
+            <div class="AD-tool-wrap">
+              <div class="Tool-Btn" @click="regen_AD">Gemini</div>
+              <div class="Tool-Btn" @click="read_AD">試聽</div>
+              |
+              <div class="Tool-Btn" @click="delete_AD_hint">刪除</div>
+              <div class="Tool-Btn" @click="save_AD">儲存</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="down" id="ALL">
+        <div class="Time-bar">
+          <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
+            :style="{ left: `${value}%` }">
+            <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
+              @click="get_ad_information(index, ttvalue)">
+              <el-icon :size="20" id="changeTimeButton">
+                <StarFilled />
+              </el-icon>
+            </div>
+            <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
+          </div>
+        </div>
+        <div class="Arrow-Sound">
+          <button class="Arrow-Img" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
+            <el-icon :size="30" height="100" color="#ffffff">
+              <ArrowLeft />
             </el-icon>
-          </div>
-
-          <!-- <img @click="get_ad_information(index, ttvalue)" src="../picture/map.png" class="time_bar__line__time__img"
-            alt=""> -->
+          </button>
+          <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
+          <button class="Arrow-Img"
+            @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
+            <el-icon :size="30" height="100" color="#ffffff">
+              <ArrowRight />
+            </el-icon>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="down" id="ALL">
-      <button class="right_arrow" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
-        <el-icon :size="30" height="100" color="#ffffff">
-          <ArrowLeft />
-        </el-icon>
-      </button>
-      <!-- <div class="TT" @mousemove="handleMouseMove">{{ ttvalue }}
-        <div class="hover-info"
-          :style="{ flex: hoverInfoFlex, left: `${mousePosition.x}%`, top: `${mousePosition.y}%` }">
-          X: {{ mousePosition.x.toFixed(2) }}%
-        </div>
-        {{ now_video_time }}
-        <div class="TT_last" :style="{ flex: 1 - hoverInfoFlex }"></div>
-
-      </div>  -->
-      <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
-
-      <button class="right_arrow"
-        @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
-        <el-icon :size="30" height="100" color="#ffffff">
-          <ArrowRight />
-        </el-icon>
-      </button>
-      <!-- 不足60 取整數 -->
-    </div>
   </div>
 </template>
-<!-- <img v-for="(item, i) in inconlist" :key="i" :src="item"> -->

@@ -3,12 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 
-export async function finally_video( speechesFolderPath, outputPath) {
-    const audioFiles = fs.readdirSync(constants.AUDIO_FOLDER).filter(file => file.endsWith('.mp3'));
+export async function finally_video( Constant) {
+    const audioFiles = fs.readdirSync(Constant.AUDIO_FOLDER).filter(file => file.endsWith('.mp3'));
 
     //check dir existing
-    if (!fs.existsSync(constants.OUTPUT_VIDEO_FOLDER)) {
-        fs.mkdirSync(constants.OUTPUT_VIDEO_FOLDER, { recursive: true });
+    if (!fs.existsSync(Constant.OUTPUT_VIDEO_FOLDER)) {
+        fs.mkdirSync(Constant.OUTPUT_VIDEO_FOLDER, { recursive: true });
     }
 
     // Prepare inputs and filters for ffmpeg
@@ -17,7 +17,7 @@ export async function finally_video( speechesFolderPath, outputPath) {
     let filterIndex = 1; // Start from 1 because 0 is the video input
 
     for (const audioFile of audioFiles) {
-        const audioPath = path.join(constants.AUDIO_FOLDER, audioFile);
+        const audioPath = path.join(Constant.AUDIO_FOLDER, audioFile);
 
         const delay = audioFile.replace('.mp3', '').replace(/_/g, ':');
         console.log('delay:', delay);
@@ -49,7 +49,7 @@ export async function finally_video( speechesFolderPath, outputPath) {
 
     return new Promise((resolve, reject) => {
         const command = ffmpeg();
-        command.input(constants.CLIPS_FOLDER + "\\video.mp4");
+        command.input(Constant.CLIPS_FOLDER + "\\video.mp4");
 
         // Add all audio inputs
         inputs.forEach(audioPath => command.input(audioPath));
@@ -76,7 +76,7 @@ export async function finally_video( speechesFolderPath, outputPath) {
             .outputOptions('-c:v copy')
             .outputOptions('-c:a aac')
             .outputOptions('-shortest')
-            .output(constants.OUTPUT_VIDEO_FOLDER + "\\output.mp4")
+            .output(Constant.OUTPUT_VIDEO_FOLDER + "\\output.mp4")
             .on('start', commandLine => console.log(`Spawned Ffmpeg with command: ${commandLine}`))
             .on('error', (err, stdout, stderr) => {
                 console.error('Error:', err);

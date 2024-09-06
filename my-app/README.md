@@ -79,19 +79,31 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-### pySceneDetect
-- 說明 : 切分鏡頭並輸出json檔(如上格式)
-- exe檔案與範例json連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
-- exe請放resources內
-- python使用 : python .\main.py [video位址] [json位址] 
-- exe使用 : .\main.exe [video位址] [json位址] 
+### pySceneDetect/main
+- 說明 : 切分鏡頭並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數
+- ~~exe檔案與範例json連結 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link~~
+- ~~exe請放resources內~~
+- python使用 : python .\main.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址]
+- ~~exe使用 : .\main.exe [video位址] [json位址]~~ 
 
-### 切分影片
+### pySceneDetect/mainTwice
+- 說明 : 切分影片並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數。完成後再將各片段進行切分，不設置最小切分鏡頭秒數。
+- python使用 : python .\mainTwice.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [二次切分後輸出片段資料夾位址]
+
+### pySceneDetect/main_overlap_with_n_seconds.py
+- 說明 : 切分鏡頭並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數，片段會重疊n秒
+- python使用 : python .\main_overlap_with_n_seconds.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [重疊n秒數]
+
+### pySceneDetect/main_not_overlap_with_n_seconds.py
+- 說明 : 切分鏡頭並輸出json檔(如上格式)與影音片段，能設置最小切分鏡頭秒數(乃透過片段組合方式，該變數使用方式與上法不同)，片段額外增加n秒，片段間不重疊
+- python使用 : python .\main_not_overlap_with_n_seconds.py [輸入video位址] [輸出json位址] [最小切分鏡頭秒數] [輸出片段資料夾位址] [增加n秒數]
+
+### pySceneDetect/video_cut
 - 說明 : 切分影片
-- exe檔案 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link
-- exe請放resources內
+- ~~exe檔案 : https://drive.google.com/drive/folders/1I7mfHGPXclsQzv029n9Swrztfu00cJLn?usp=drive_link~~
+- ~~exe請放resources內~~
 - python使用 : python .\video_cut.py [輸入video位址] [輸出video位址] [起始時間] [結束時間]
-- exe使用 : .\video_cut.exe [輸入video位址] [輸出video位址] [起始時間] [結束時間]
+- ~~exe使用 : .\video_cut.exe [輸入video位址] [輸出video位址] [起始時間] [結束時間]~~
 
 ### Gemini
 > 影片僅Vertex AI 支援，需使用Google Cloud Platform (之前比較簡單的是Google AI)，影片需上傳至Google Cloud Storage

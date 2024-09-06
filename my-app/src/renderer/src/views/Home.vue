@@ -37,15 +37,30 @@ import New_add from '../components/New_add.vue';
 const overlayVisible = ref(false);
 
 const handleFileChange = (e: MouseEvent) => {
+  ChooseFilePosition(e);
   // 啟動覆蓋層
 
   overlayVisible.value = true;
+  
   window.electron.ipcRenderer.send('file', 'open');
 };
 
-const openOldFile = (e: MouseEvent) => {
-  router.push('/edit');
+const ChooseFilePosition = (e: MouseEvent) => {
+  window.electron.ipcRenderer.send('ChooseFilePosition', 'open');
 };
+
+const openOldFile = (e) => {
+  window.electron.ipcRenderer.send('GET-Old-Path');
+  window.electron.ipcRenderer.once('Old-Path-Data', (event, arg) => {
+    if (arg) {
+      console.log('成功');
+      router.push({ path: '/edit', query: { data: arg } });
+    } else {
+      console.log('失敗');
+    }
+  });
+};
+
 
 const generate = (e: MouseEvent) => {
   // 啟動覆蓋層

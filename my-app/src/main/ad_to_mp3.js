@@ -9,20 +9,20 @@ import saveMP3FromJsonEXE from '../../resources/saveMP3FromJson.exe?asset&asarUn
 import { AD_tts } from './openai_tts'
 
 
-export async function call_readEXE(ADname,choice,theName,mode=0) {
+export async function call_readEXE(ADname,choice,theName,mode=0,Constant) {
   let output_name =theName+".mp3";
   output_name = output_name.replace(/:/g, "_");
   // console.log(output_name);
-  const output_audio = path.join(constants.AUDIO_FOLDER, output_name);
-  if (!fs.existsSync(constants.AUDIO_FOLDER)) {
-    fs.mkdirSync(constants.AUDIO_FOLDER, { recursive: true });
+  const output_audio = path.join(Constant.AUDIO_FOLDER, output_name);
+  if (!fs.existsSync(Constant.AUDIO_FOLDER)) {
+    fs.mkdirSync(Constant.AUDIO_FOLDER, { recursive: true });
   }
 
   var cmd;
   if (mode === 0) 
-    cmd = `"${readFromJsonEXE}" "${constants.OUTPUT_JSON_PATH}" "${output_audio}" "${ADname}" "${choice}"`;
+    cmd = `"${readFromJsonEXE}" "${Constant.OUTPUT_JSON_PATH}" "${output_audio}" "${ADname}" "${choice}"`;
   else if (mode === 1) 
-    cmd = `"${saveMP3FromJsonEXE}" "${constants.OUTPUT_JSON_PATH}" "${output_audio}" "${ADname}" "${choice}"`;
+    cmd = `"${saveMP3FromJsonEXE}" "${Constant.OUTPUT_JSON_PATH}" "${output_audio}" "${ADname}" "${choice}"`;
 
   try {
     const { stdout } = await execPromise(cmd, { windowsHide: true });
@@ -40,9 +40,9 @@ export async function call_readEXE(ADname,choice,theName,mode=0) {
 };
 
 
-export async function call_readEXE_recursive() {
+export async function call_readEXE_recursive(Constant) {
   try {
-    const data = await fs.promises.readFile(constants.OUTPUT_JSON_PATH, 'utf8');
+    const data = await fs.promises.readFile(Constant.OUTPUT_JSON_PATH, 'utf8');
     let sum = 0;
     const jsonData = JSON.parse(data);
     const jsonDataArray = Object.values(jsonData);
@@ -53,10 +53,10 @@ export async function call_readEXE_recursive() {
       const ADChoice = jsonDataArray[i]["AD-content-ID"];
       const output_name = jsonDataArray[i]["scene-start-time"].replace(/:/g, "_");
       const content = jsonDataArray[i]["AD-content"][ADChoice];
-      if(constants.TTS_Type === 'python')
+      if(Constant.TTS_Type === 'python')
         sum += await call_readEXE(ADname, ADChoice, output_name, 1);
-      else if(constants.TTS_Type === 'openai')
-        sum += await call_openai_tts(content, constants.AUDIO_FOLDER, output_name);
+      else if(Constant.TTS_Type === 'openai')
+        sum += await call_openai_tts(content, Constant.AUDIO_FOLDER, output_name);
     }
 
     return sum === jsonDataIndex.length;

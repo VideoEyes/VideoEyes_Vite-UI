@@ -1,0 +1,93 @@
+#usage : python main.py [video_dir] [json_dir] [min_scene_length_seconds] [output_clips_folder] [output_clips_second_folder]
+
+
+from scenedetect import SceneManager, open_video, AdaptiveDetector ,split_video_ffmpeg ,ContentDetector , ThresholdDetector, HistogramDetector
+# from scenedetect.scene_manager import save_images
+from sys import argv
+from json import dump
+from moviepy.editor import VideoFileClip
+from scenedetect.stats_manager import StatsManager
+from os import listdir ,mkdir
+from os.path import isdir 
+from shutil import rmtree
+
+# 第一個參數是腳本名稱本身
+# 從第二個參數開始是用戶提供的參數
+script_name = argv[0]
+arguments = argv[1:]
+
+input_video_path = arguments[0] #"D:\\meowVue\\pySceneDetect\\vid\orig\\net.mp4"
+output_json_path = arguments[1]
+min_seconds = int(arguments[2])
+output_videos_path = arguments[3]
+output_videos_path_second = arguments[4]
+
+clip = VideoFileClip(input_video_path)
+fps = clip.fps
+# print("FPS:", fps)
+
+class CustomAdaptiveDetector(AdaptiveDetector):
+    def __init__(self, min_scene_len):
+        super().__init__(min_scene_len=min_scene_len)
+        
+class CustomContentDetector(ContentDetector):
+    def __init__(self, min_scene_len):
+        super().__init__(min_scene_len=min_scene_len,threshold= 27.0)
+
+class CustomThresholdDetector(ThresholdDetector):
+    def __init__(self, min_scene_len):
+        super().__init__(min_scene_len=min_scene_len,threshold= 27.0)
+
+def find_scenes(video_path, min_scene_length_seconds=1.5):
+    video = open_video(video_path)
+    scene_manager = SceneManager(stats_manager=StatsManager())
+    dt = CustomAdaptiveDetector(min_scene_len=fps * min_scene_length_seconds)
+    scene_manager.add_detector(dt)
+    scene_manager.detect_scenes(video)
+    stats_manager = scene_manager.stats_manager
+    # print(stats_manager.get_metrics(100,["content_val"])) # 獲取第100(101)幀的 content_val
+    # stats_manager.save_to_csv('D:\\meowVue\\pySceneDetect\\vid\\test.csv') # 將統計資訊(每frame資料)寫入 csv 檔案
+    
+    return scene_manager.get_scene_list()
+
+def save_scenes_to_json(scene_list, output_file):
+    outer_dict = {}
+    for i, scene in enumerate(scene_list):
+        inner_dict = {}
+        inner_dict['scene-start-time'] = scene[0].get_timecode()
+        inner_dict['scene-end-time'] = scene[1].get_timecode()
+        inner_dict['AD-start-time'] = scene[0].get_timecode()
+        inner_dict['AD-content'] = ["", "", "", ""]
+        inner_dict['AD-content-ID'] = 0
+        # AD001, AD002, 003, 004
+        outer_dict[f"AD{i+1:03d}"] = inner_dict
+        #outer_dict["AD"+str(i)] = inner_dict
+    with open(output_file, "w") as json_file:
+        dump(outer_dict, json_file, indent=4)
+
+try:
+    scene_list = find_scenes(input_video_path, min_scene_length_seconds=min_seconds)
+    save_scenes_to_json(scene_list, output_json_path)
+    split_video_ffmpeg(input_video_path, scene_list, output_dir=output_videos_path,output_file_template="AD$SCENE_NUMBER.mp4")
+    
+    if isdir(output_videos_path_second) == True:
+        rmtree(output_videos_path_second)
+    mkdir(output_videos_path_second)
+
+    files = listdir(output_videos_path)
+    for file in files:
+        filepath = output_videos_path+"\\"+file
+        if isdir(filepath):
+            continue
+        else:
+            part_output_path = output_videos_path_second+"\\"+file
+            mkdir(part_output_path)
+
+        # print(filepath)
+        scene_list = find_scenes(filepath, min_scene_length_seconds=0)
+        split_video_ffmpeg(filepath, scene_list, output_dir=part_output_path,output_file_template="PARTAD$SCENE_NUMBER.mp4")
+    
+    print("Done")
+    pass
+except Exception as e:
+    print("Errors occurs : ", e)
