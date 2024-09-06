@@ -177,7 +177,7 @@ app.whenReady().then(() => {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
-        const cmd = `python "${haystack_gemini}" "${constants.VIDEO_PATH}" "${constants.GEMINI_OUTPUT_PATH}"`
+        const cmd = `python "${haystack_gemini}" "${Constant.VIDEO_PATH}" "${Constant.GEMINI_OUTPUT_PATH}"`
         let audioText_json = {}        
         exec(cmd, { windowsHide: true }, async(error, stdout, stderr) => {
           if (error) {
@@ -187,17 +187,17 @@ app.whenReady().then(() => {
           // 讀檔 gemini_result.json
           const fs = require('fs')
           const path = require('path')
-          const gemini_result = constants.GEMINI_OUTPUT_PATH
+          const gemini_result = Constant.GEMINI_OUTPUT_PATH
           fs.readFile(gemini_result, 'utf8', async(err, data) => {
             audioText_json = JSON.parse(data)
             audioText_json = audioText_json['audioDescriptionList']
             console.log(audioText_json)
-            if (fs.existsSync(constants.AUDIO_FOLDER)) {
+            if (fs.existsSync(Constant.AUDIO_FOLDER)) {
               try {
-                await fs.promises.rm(constants.AUDIO_FOLDER, { recursive: true, force: true })
+                await fs.promises.rm(Constant.AUDIO_FOLDER, { recursive: true, force: true })
                 console.log('The folder has been deleted!')
 
-                await fs.promises.mkdir(constants.AUDIO_FOLDER, { recursive: true })
+                await fs.promises.mkdir(Constant.AUDIO_FOLDER, { recursive: true })
                 console.log('The folder has been created!')
               } catch (error) {
                 console.error('Error clearing and creating folder:', error)
@@ -206,7 +206,7 @@ app.whenReady().then(() => {
             for (let i = 0; i < audioText_json.length; i++) {
               const timestamp = audioText_json[i].time
               const text = audioText_json[i].content
-              await AD_tts(timestamp, text, constants.AUDIO_FOLDER)
+              await AD_tts(timestamp, text, Constant.AUDIO_FOLDER)
             }
     
             let mainJson = {}
@@ -226,7 +226,7 @@ app.whenReady().then(() => {
               }
             }
             console.log('mainJson:', mainJson)
-            fs.writeFile(constants.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
+            fs.writeFile(Constant.OUTPUT_JSON_PATH, JSON.stringify(mainJson, null, 4), (err) => {
               if (err) {
                 console.error('ERROR:', err)
                 return
@@ -235,9 +235,9 @@ app.whenReady().then(() => {
             })
     
             await mergeAllAudioToVideo(
-              constants.VIDEO_PATH,
-              constants.AUDIO_FOLDER,
-              constants.OUTPUT_VIDEO_FOLDER
+              Constant.VIDEO_PATH,
+              Constant.AUDIO_FOLDER,
+              Constant.OUTPUT_VIDEO_FOLDER
             )
             event.reply('generate-reply', true)
           })
@@ -734,8 +734,8 @@ async function gemini_process_all(AD_json, event) {
     const jsonIndex = Object.keys(jsonData);
 
     for (const key of jsonIndex) {
-      const filePath = path.join(constants.CLIPS_FOLDER, key + '.mp4');
-      const cmd = `python "${haystack_gemini_summrize}" "${filePath}" "${constants.GEMINI_OUTPUT_PATH}"`;
+      const filePath = path.join(Constant.CLIPS_FOLDER, key + '.mp4');
+      const cmd = `python "${haystack_gemini_summrize}" "${filePath}" "${Constant.GEMINI_OUTPUT_PATH}"`;
 
       await new Promise((resolve, reject) => {
         exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
@@ -746,7 +746,7 @@ async function gemini_process_all(AD_json, event) {
           }
 
           // 读取 gemini_result.json 文件
-          fs.readFile(constants.GEMINI_OUTPUT_PATH, 'utf8', (err, data) => {
+          fs.readFile(Constant.GEMINI_OUTPUT_PATH, 'utf8', (err, data) => {
             if (err) {
               reject(err);
               return;

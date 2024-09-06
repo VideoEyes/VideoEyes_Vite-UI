@@ -29,7 +29,7 @@ function constants(PATH,FLAG,P_NAME) {
     PROJECT_NAME = PATH.split('\\').pop();
     PROJECT_PATH = PROJECT_PATH.split('\\').slice(0,-1).join('\\');
   }
-  
+  const GEMINI_OUTPUT_PATH = path.join(PROJECT_PATH, 'json/gemini_output.json');
   const USER_DATA_PATH = app.getPath('userData');
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
   const CLIPS_FOLDER = path.join(PROJECT_PATH, 'video');
@@ -38,7 +38,7 @@ function constants(PATH,FLAG,P_NAME) {
   const OUTPUT_VIDEO_FOLDER = path.join(PROJECT_PATH, 'output_video');
   const OUTPUT_VIDEO_PATH = path.join(OUTPUT_VIDEO_FOLDER, 'output.mp4');
   const FINALLY_FOLDER = path.join(PROJECT_PATH, 'finally');
-  const GEMINI_MODEL = 'gemini-1.5-pro-preview-0514';
+  const GEMINI_MODEL = 'gemini-1.5-pro-001';
   const TTS_Type = 'openai';
   return {
     PROJECT_NAME :PROJECT_NAME,
@@ -53,7 +53,8 @@ function constants(PATH,FLAG,P_NAME) {
     VIDEO_PATH: VIDEO_PATH,
     AUDIO_FOLDER: AUDIO_FOLDER,
     FINALLY_FOLDER: FINALLY_FOLDER,
-    TTS_Type: TTS_Type
+    TTS_Type: TTS_Type,
+    GEMINI_OUTPUT_PATH: GEMINI_OUTPUT_PATH
   };
 }
 
