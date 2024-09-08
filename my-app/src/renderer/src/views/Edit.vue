@@ -521,7 +521,7 @@ let Hover_Time = ref("");
 function showTip(index, ttvalue) {
   hoveredIndex.value = index;
   isTipVisible.value = true;
-  window.electron.ipcRenderer.send('get-Specific-Time', index,ttvalue);
+  window.electron.ipcRenderer.send('get-Specific-Time', index, ttvalue);
   window.electron.ipcRenderer.once('get-Specific-Time-reply', (event, arg) => {
     Hover_Time.value = arg;
   });
@@ -593,29 +593,31 @@ let overlayVisible = ref(false);
           </div>
         </div>
       </div>
+      <!--  -->
       <div class="down" id="ALL">
-        <div class="Time-bar">
-          <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
-            :style="{ left: `${value}%` }">
-            <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
-              @click="get_ad_information(index, ttvalue)">
-              <el-icon :size="20" id="changeTimeButton">
-                <StarFilled />
-              </el-icon>
-            </div>
-            <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
-          </div>
-        </div>
+
         <div class="Arrow-Sound">
           <button class="Arrow-Img" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
-            <el-icon :size="30" height="100" color="#ffffff">
+            <el-icon :size="45" height="120" color="#ffffff">
               <ArrowLeft />
             </el-icon>
           </button>
-          <img src="../picture/sound-8825_512.gif" width="1500px" height="100px" alt="Description of the GIF">
+          <div class="Time-bar">
+            <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
+              :style="{ left: `${value}%` }">
+              <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
+                @click="get_ad_information(index, ttvalue)">
+                <el-icon :size="20" id="changeTimeButton">
+                  <StarFilled />
+                </el-icon>
+              </div>
+              <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
+            </div>
+          </div>
+          <img src="../picture/sound-8825_512.gif" width="1500px" height="120px" alt="Description of the GIF">
           <button class="Arrow-Img"
             @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
-            <el-icon :size="30" height="100" color="#ffffff">
+            <el-icon :size="45" height="120" color="#ffffff">
               <ArrowRight />
             </el-icon>
           </button>
