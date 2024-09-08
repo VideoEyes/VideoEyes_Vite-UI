@@ -596,25 +596,27 @@ let overlayVisible = ref(false);
       <!--  -->
       <div class="down" id="ALL">
 
-        <div class="Arrow-Sound">
+        <div class="Arrow-Sound" >
           <button class="Arrow-Img" @click="ttvalue = (ttvalue > 1) ? ttvalue - 1 : 1">
             <el-icon :size="45" height="120" color="#ffffff">
               <ArrowLeft />
             </el-icon>
           </button>
-          <div class="Time-bar">
-            <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
-              :style="{ left: `${value}%` }">
-              <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
-                @click="get_ad_information(index, ttvalue)">
-                <el-icon :size="20" id="changeTimeButton">
-                  <StarFilled />
-                </el-icon>
+          <div class="btm-block" style="width: 100%;">
+            <div class="Time-bar">
+              <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
+                :style="{ left: `${value}%` }">
+                <div class="time_bar__line__time__img" @mouseover="showTip(index, ttvalue)" @mouseout="hideTip"
+                  @click="get_ad_information(index, ttvalue)">
+                  <el-icon :size="20" id="changeTimeButton">
+                    <StarFilled />
+                  </el-icon>
+                </div>
+                <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
               </div>
-              <div v-if="hoveredIndex == index" id="tips">{{ Hover_Time }}</div>
             </div>
+            <img src="../picture/sound-8825_512.gif" height="120px" alt="Description of the GIF">
           </div>
-          <img src="../picture/sound-8825_512.gif" width="1500px" height="120px" alt="Description of the GIF">
           <button class="Arrow-Img"
             @click="ttvalue = (ttvalue < Math.ceil(totaltime / 60)) ? ttvalue + 1 : Math.ceil(totaltime / 60)">
             <el-icon :size="45" height="120" color="#ffffff">

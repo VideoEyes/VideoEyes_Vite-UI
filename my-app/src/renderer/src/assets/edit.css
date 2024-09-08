@@ -183,10 +183,18 @@ textarea {
 
 .Time-bar {
     display: flex;
+    width: 100%;
+}
+
+.Arrow-Sound{
+    display: flex;
+    justify-content: space-between;
 }
 
 .time_bar__line__time {
-    padding: 0 50px;
+    /* padding: 0 50px; */
+    display: flex;
+    
     position: relative;
     top: 0;
     transform: translateX(-50%);

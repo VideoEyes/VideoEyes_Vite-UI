@@ -197,6 +197,9 @@ app.whenReady().then(() => {
         console.log('video was copied to input folder')
         event.reply('get-video', result.filePaths)
       } else if (arg === 'generate') {
+        if(!fs.existsSync(Constant.OUTPUT_JSON_FOLDER)){
+          fs.mkdirSync(Constant.OUTPUT_JSON_FOLDER)
+        }
         const cmd = `python "${haystack_gemini}" "${Constant.VIDEO_PATH}" "${Constant.GEMINI_OUTPUT_PATH}"`
         let audioText_json = {}        
         exec(cmd, { windowsHide: true }, async(error, stdout, stderr) => {

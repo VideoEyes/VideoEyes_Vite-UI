@@ -31,6 +31,7 @@ function constants(PATH,FLAG,P_NAME) {
   }
   const GEMINI_OUTPUT_PATH = path.join(PROJECT_PATH, 'json/gemini_output.json');
   const USER_DATA_PATH = app.getPath('userData');
+  const OUTPUT_JSON_FOLDER = path.join(PROJECT_PATH, 'json');
   const output_json = path.join(PROJECT_PATH, 'json/main.json');
   const CLIPS_FOLDER = path.join(PROJECT_PATH, 'video');
   const VIDEO_PATH = path.join(CLIPS_FOLDER, 'video.mp4');
@@ -54,7 +55,8 @@ function constants(PATH,FLAG,P_NAME) {
     AUDIO_FOLDER: AUDIO_FOLDER,
     FINALLY_FOLDER: FINALLY_FOLDER,
     TTS_Type: TTS_Type,
-    GEMINI_OUTPUT_PATH: GEMINI_OUTPUT_PATH
+    GEMINI_OUTPUT_PATH: GEMINI_OUTPUT_PATH,
+    OUTPUT_JSON_FOLDER: OUTPUT_JSON_FOLDER
   };
 }
 
