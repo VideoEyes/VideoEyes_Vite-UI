@@ -136,6 +136,21 @@ app.whenReady().then(() => {
   });
   //copy video file
   ipcMain.on('file', async (event, arg) => {
+    try {
+      const resultA = await dialog.showOpenDialog({
+        properties: ["openDirectory"]
+      });
+      if (resultA.canceled) {
+        return;
+      }
+      const path3 = resultA.filePaths[0];
+      Constant = constants(path3);
+      // console.log("Project_PATH_Name:", path3);
+      console.log("constants:", Constant);
+    } catch (error) {
+      console.error("Error in ChooseFilePosition:", error);
+    }
+    
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{ name: 'Videos', extensions: ['mp4', 'avi', 'mov'] }]
@@ -144,6 +159,11 @@ app.whenReady().then(() => {
     if (result.filePaths.length === 0) {
       return
     }
+
+    
+
+
+
     // copy file to output folder
     const input = result.filePaths[0]
     //const USER_DATA_PATH = app.getPath('userData')
