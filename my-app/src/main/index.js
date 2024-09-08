@@ -178,7 +178,7 @@ app.whenReady().then(() => {
         const videoUri = await gemini_1_5_uploadFile('video.mp4', Constant.VIDEO_PATH)
         console.log('videoUri: ' + videoUri)
         const audioText = await gemini_1_5_sendMultiModalPromptWithVideo(
-          'gemini-rain-py',
+          'pacific-booking-430416-e4',
           'us-central1',
           'gemini-1.5-flash-preview-0514',
           videoUri

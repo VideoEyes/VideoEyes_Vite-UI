@@ -4,7 +4,7 @@ const { VertexAI } = require('@google-cloud/vertexai');
  * TODO(developer): Update these variables before running the sample.
  */
 async function sendMultiModalPromptWithVideo(
-    projectId = '	gemini-rain-py',
+    projectId = 'pacific-booking-430416-e4',
     location = 'us-central1',
     model = 'gemini-1.5-pro-preview-0514',
     uri = 'gs://gemini-ad-gen/pixel8.mp4'

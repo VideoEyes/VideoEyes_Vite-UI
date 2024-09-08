@@ -63,6 +63,8 @@ const openOldFile = (e) => {
 
 
 const generate = (e: MouseEvent) => {
+  // 給加入路徑
+  ChooseFilePosition(e);
   // 啟動覆蓋層
   overlayVisible.value = true;
   window.electron.ipcRenderer.send('file', 'generate');

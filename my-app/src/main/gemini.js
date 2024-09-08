@@ -2,9 +2,9 @@ const { VertexAI } = require('@google-cloud/vertexai');
 const { Storage } = require('@google-cloud/storage');
 
 
-const vertexAI = new VertexAI({ project: 'gemini-rain-py', location: 'us-central1' });
+const vertexAI = new VertexAI({ project: 'pacific-booking-430416-e4', location: 'us-central1' });
 const storage = new Storage();
-const bucketName = 'gemini-ad-gen';
+const bucketName = 'moreexample';
 
 export async function gemini_sendMultiModalPromptWithVideo(projectId, location, model, uri) {
     try {
