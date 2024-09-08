@@ -1,4 +1,5 @@
 from haystack_integrations.components.generators.google_vertex import VertexAIGeminiGenerator
+from vertexai.generative_models import GenerationConfig
 from vertexai.generative_models import Part
 import json
 import random
@@ -112,6 +113,7 @@ class AddVideo2Prompt:
 
     @component.output_types(prompt=list)
     def run(self, uri: str, prompt: str):
+        # print("prompt: ", prompt)
         return {"prompt": [Part.from_uri(uri, mime_type="video/mp4"),prompt]}
 
 add_video_2_prompt = AddVideo2Prompt()
@@ -120,19 +122,60 @@ add_video_2_summary_prompt = AddVideo2Prompt()
 
 @component
 class GeminiGenerator:
-    def __init__(self, project_id, location, model):
+    def __init__(self, project_id, location, model, generation_config):
         self.project_id = project_id
         self.location = location
         self.model = model
+        self.generation_config = generation_config
     
     @component.output_types(replies=List[str])
     def run(self, prompt: List):
-        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model)
-        return {"replies": generator.run(prompt)["replies"]}
+        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, generation_config=self.generation_config)
+        replies = generator.run(prompt)["replies"]
+        # print(f"replies: {replies}")
+        return {"replies": replies}
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-preview-0514")
 
-summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash-001")
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-001", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={"properties": {"Audiodescription": {"title": "Audiodescription", "type": "string"}}, "required": ["Audiodescription"], "title": "audioDescription", "type": "object"}))
+
+summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-001", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={
+  "properties": {
+    "who": {
+      "title": "Who",
+      "type": "string"
+    },
+    "what": {
+      "title": "What",
+      "type": "string"
+    },
+    "when": {
+      "title": "When",
+      "type": "string"
+    },
+    "where": {
+      "title": "Where",
+      "type": "string"
+    },
+    "how": {
+      "title": "How",
+      "type": "string"
+    },
+    "why": {
+      "title": "Why",
+      "type": "string"
+    }
+  },
+  "required": [
+    "who",
+    "what",
+    "when",
+    "where",
+    "how",
+    "why"
+  ],
+  "title": "videoSummary",
+  "type": "object"
+}))
 
 from google.cloud import storage
 @component
@@ -158,25 +201,27 @@ pipeline.add_component(instance=upload2gcs, name="upload2gcs")
 pipeline.add_component(instance=summary_prompt_builder, name="summary_prompt_builder")
 pipeline.add_component(instance=add_video_2_summary_prompt, name="add_video_2_summary_prompt")
 pipeline.add_component(instance=summary_gemini_generator, name="summary_generator")
-pipeline.add_component(instance=summary_validator, name="summary_validator")
+# pipeline.add_component(instance=summary_validator, name="summary_validator")
 pipeline.add_component(instance=prompt_builder, name="prompt_builder")
 pipeline.add_component(instance=add_video_2_prompt, name="add_video")
 pipeline.add_component(instance=gemini_generator, name="llm")
-pipeline.add_component(instance=output_validator, name="output_validator")
+# pipeline.add_component(instance=output_validator, name="output_validator")
 
 pipeline.connect("upload2gcs", "add_video")
 pipeline.connect("upload2gcs", "add_video_2_summary_prompt")
 pipeline.connect("summary_prompt_builder", "add_video_2_summary_prompt")
 pipeline.connect("add_video_2_summary_prompt", "summary_generator")
-pipeline.connect("summary_generator", "summary_validator")
-pipeline.connect("summary_validator.valid_replies", "prompt_builder.summary")
-pipeline.connect("summary_validator.invalid_replies", "summary_prompt_builder")
-pipeline.connect("summary_validator.error_message", "summary_prompt_builder")
+pipeline.connect("summary_generator", "prompt_builder.summary")
+# pipeline.connect("summary_generator", "summary_validator")
+# pipeline.connect("summary_validator.valid_replies", "prompt_builder.summary")
+# pipeline.connect("summary_validator.invalid_replies", "summary_prompt_builder")
+# pipeline.connect("summary_validator.error_message", "summary_prompt_builder")
 pipeline.connect("prompt_builder", "add_video")
 pipeline.connect("add_video.prompt", "llm")
-pipeline.connect("llm", "output_validator")
-pipeline.connect("output_validator.invalid_replies", "prompt_builder.invalid_replies")
-pipeline.connect("output_validator.error_message", "prompt_builder.error_message")
+# pipeline.connect("llm", "output_validator")
+# pipeline.connect("output_validator.invalid_replies", "prompt_builder.invalid_replies")
+# pipeline.connect("output_validator.error_message", "prompt_builder.error_message")
+
 
 video_path = argv[1]
 output_path = argv[2]
@@ -187,7 +232,7 @@ result = pipeline.run({
     "prompt_builder": {"schema": json_schema}
 })
 
-valid_reply = result["output_validator"]["valid_replies"][0]
+valid_reply = result["llm"]["replies"][0]
 valid_json = json.loads(valid_reply)
 
 with open(output_path , "w") as f:
