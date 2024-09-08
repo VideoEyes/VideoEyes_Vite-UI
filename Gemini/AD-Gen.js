@@ -82,13 +82,13 @@ async function uploadFile(destFileName, filePath, bucketName) {
     return `gs://${bucketName}/${destFileName}`;
 }
 // Run the sample
-const bucketName = 'gemini-ad-gen';
+const bucketName = 'moreexample';
 const videoFile = 'AD001.mp4';
 async function main() {
     const vido_uri = await uploadFile(videoFile, videoFile, bucketName);
     // console.log('Video URI:', vido_uri);
     // console.log('Sending multimodal prompt with video...');
-    sendMultiModalPromptWithVideo('gemini-rain-py', 'us-central1', 'gemini-1.5-flash-preview-0514', vido_uri);
+    sendMultiModalPromptWithVideo('pacific-booking-430416-e4', 'us-central1', 'gemini-1.5-flash-preview-0514', vido_uri);
 }
 
 main().catch(console.error);
