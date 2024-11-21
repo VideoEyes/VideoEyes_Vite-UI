@@ -195,8 +195,7 @@ class upload2GCS:
 upload2gcs = upload2GCS(bucket_name="gemini-ad-gen")
 
 from haystack import Pipeline
-
-pipeline = Pipeline(max_loops_allowed=5)
+pipeline = Pipeline(max_runs_per_component=5)
 pipeline.add_component(instance=upload2gcs, name="upload2gcs")
 pipeline.add_component(instance=summary_prompt_builder, name="summary_prompt_builder")
 pipeline.add_component(instance=add_video_2_summary_prompt, name="add_video_2_summary_prompt")
