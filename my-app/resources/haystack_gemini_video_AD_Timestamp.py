@@ -139,7 +139,7 @@ class upload2GCS:
 upload2gcs = upload2GCS(bucket_name="gemini-ad-gen")
 
 
-pipeline = Pipeline(max_loops_allowed=5)
+pipeline = Pipeline(max_runs_per_component=5)
 
 # Add components to your pipeline
 # pipeline.add_component(instance=prompt_builder, name="prompt_builder")
