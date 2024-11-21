@@ -183,7 +183,6 @@ function regen_AD() {
 }
 
 function new_AD() {
-  // console.log('write-file');
   Store_AD();
   // Toast_add.fire({
   //   icon: "success",
@@ -245,16 +244,19 @@ function Store_AD() {
   let last_ID = MAN_index + 1;
   // last_ID = parseInt(last_ID.replace(/[^0-9]/g, "")) + 1;
   // last_ID = "AD" + last_ID;
+  console.log("last_ID", last_ID);
   let get_last_ID = 0;
+  let last_ID_temp = last_ID;
   while (last_ID > 0) {
-    get_last_ID++;
-    last_ID /= 10;
+    get_last_ID = last_ID /= 10;
   }
   let LAST = "";
-  if (get_last_ID == 1) {
-    LAST = "AD00" + String(last_ID);
+  if (get_last_ID == 0) {
+    LAST = "AD00" + String(last_ID_temp);
+  } else if (get_last_ID == 1) {
+    LAST = "AD0" + String(last_ID_temp);
   } else if (get_last_ID == 2) {
-    LAST = "AD0" + String(last_ID);
+    LAST = "AD" + String(last_ID_temp);
   }
   console.log("LAST", LAST);
   let data = {
@@ -602,7 +604,7 @@ let overlayVisible = ref(false);
               <ArrowLeft />
             </el-icon>
           </button>
-          <div class="btm-block" style="width: 100%;">
+          <div class="btm-block" style="width:80% ;z-index: 10; ">
             <div class="Time-bar">
               <div class="time_bar__line__time" v-for="(value, index) in getShowTimeBar(ttvalue)" :key="index"
                 :style="{ left: `${value}%` }">

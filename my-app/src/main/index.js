@@ -367,6 +367,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('write-file', (event, content) => {
+    console.log('abcde:', content)
     fs.readFile(Constant.OUTPUT_JSON_PATH, 'utf8', (err, data) => {
       if (err) {
         console.error('Error reading file:', err)
@@ -375,8 +376,8 @@ app.whenReady().then(() => {
       let jsonData
       try {
         jsonData = JSON.parse(data)
-        console.log('content', content)
-        console.log('jsonData', jsonData)
+        // console.log('content', content)
+        // console.log('jsonData', jsonData)
       } catch (parseError) {
         console.error('Error parsing JSON data:', parseError)
         return
@@ -410,11 +411,13 @@ app.whenReady().then(() => {
       /////
       const sortedJson = {} // Convert array to json
       jsonArray.forEach(([key, value]) => {
+        
         sortedJson[key] = value
       })
       const updatedJsonData = JSON.stringify(sortedJson, null, 4)
+
       //////
-      // console.log("updatedJsonData", updatedJsonData);
+      console.log("updatedJsonData", updatedJsonData);
       fs.writeFile(Constant.OUTPUT_JSON_PATH, updatedJsonData, 'utf8', (err2) => {
         if (err2) {
           console.error('ERROR:', err2)
