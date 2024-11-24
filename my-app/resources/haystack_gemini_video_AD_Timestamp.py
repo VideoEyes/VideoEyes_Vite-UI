@@ -15,6 +15,11 @@ from haystack.components.builders import PromptBuilder
 from google.cloud import storage
 from haystack import Pipeline
 from sys import argv
+from vertexai.generative_models import (
+    HarmCategory,
+    HarmBlockThreshold,
+    SafetySetting,
+)
 
 class audioDescription(BaseModel):
     time: datetime
@@ -106,6 +111,29 @@ class AddVideo2Prompt:
 
 add_video_2_prompt = AddVideo2Prompt(prompt=prompt_builder)
 
+safetyConfig = [
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+]
+
 @component
 class GeminiGenerator:
     def __init__(self, project_id, location, model):
@@ -115,7 +143,7 @@ class GeminiGenerator:
     
     @component.output_types(replies=List[str])
     def run(self, prompt: List):
-        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model)
+        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model,safety_settings=safetyConfig)
         return {"replies": generator.run(prompt)["replies"]}
 
 gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-preview-0514")

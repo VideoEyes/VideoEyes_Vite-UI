@@ -5,6 +5,7 @@ const OpenAI = require('openai');
 const openai = new OpenAI();
 
 export async function AD_tts(timestamp, text, output_folder) {
+  if(text === '') return
   let mp3;
   try {
     mp3 = await openai.audio.speech.create({

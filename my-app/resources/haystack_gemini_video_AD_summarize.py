@@ -13,6 +13,11 @@ from typing import List
 from pydantic import BaseModel, validator
 from haystack.components.builders import PromptBuilder
 from sys import argv
+from vertexai.generative_models import (
+    HarmCategory,
+    HarmBlockThreshold,
+    SafetySetting,
+)
 
 class audioDescription(BaseModel):
     Audiodescription: str
@@ -120,6 +125,29 @@ add_video_2_prompt = AddVideo2Prompt()
 
 add_video_2_summary_prompt = AddVideo2Prompt()
 
+safetyConfig = [
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+        threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+]
+
 @component
 class GeminiGenerator:
     def __init__(self, project_id, location, model, generation_config):
@@ -130,15 +158,15 @@ class GeminiGenerator:
     
     @component.output_types(replies=List[str])
     def run(self, prompt: List):
-        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, generation_config=self.generation_config)
+        generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model, generation_config=self.generation_config, safety_settings=safetyConfig)
         replies = generator.run(prompt)["replies"]
         # print(f"replies: {replies}")
         return {"replies": replies}
 
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-001", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={"properties": {"Audiodescription": {"title": "Audiodescription", "type": "string"}}, "required": ["Audiodescription"], "title": "audioDescription", "type": "object"}))
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={"properties": {"Audiodescription": {"title": "Audiodescription", "type": "string"}}, "required": ["Audiodescription"], "title": "audioDescription", "type": "object"}))
 
-summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-001", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={
+summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={
   "properties": {
     "who": {
       "title": "Who",
@@ -225,14 +253,19 @@ pipeline.connect("add_video.prompt", "llm")
 video_path = argv[1]
 output_path = argv[2]
 
-result = pipeline.run({
-    "upload2gcs": { "file_path": video_path},
-    "summary_prompt_builder": {"schema": summary_schema},
-    "prompt_builder": {"schema": json_schema}
-})
+try:
+  result = pipeline.run({
+      "upload2gcs": { "file_path": video_path},
+      "summary_prompt_builder": {"schema": summary_schema},
+      "prompt_builder": {"schema": json_schema}
+  })
 
-valid_reply = result["llm"]["replies"][0]
-valid_json = json.loads(valid_reply)
+  valid_reply = result["llm"]["replies"][0]
+  valid_json = json.loads(valid_reply)
 
-with open(output_path , "w") as f:
-    json.dump(valid_json, f, indent=2)
+  with open(output_path , "w") as f:
+      json.dump(valid_json, f, indent=2)
+except Exception as e:
+  empty_json = {"Audiodescription": ""}
+  with open(output_path , "w") as f:
+      json.dump(empty_json, f, indent=2)

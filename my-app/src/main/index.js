@@ -750,59 +750,78 @@ async function gemini_process_all(AD_json, event) {
   const fs = require('fs');
   const path = require('path');
   const exec = require('child_process').exec;
-  
+
   fs.readFile(AD_json, 'utf8', async (err, data) => {
     if (err) {
-      console.error('ERROR:', err);
+      console.error('ERROR reading file:', err);
+      event.reply('gemini_end', 'FAIL');
       return;
     }
+
     const jsonData = JSON.parse(data);
     const jsonIndex = Object.keys(jsonData);
+    const errors = []; // 用於記錄錯誤
 
     for (const key of jsonIndex) {
       const filePath = path.join(Constant.CLIPS_FOLDER, key + '.mp4');
       const cmd = `python "${haystack_gemini_summrize}" "${filePath}" "${Constant.GEMINI_OUTPUT_PATH}"`;
 
-      await new Promise((resolve, reject) => {
-        exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
-          if (error) {
-            console.error(`error: ${error}`);
-            reject(error);
-            return;
-          }
-
-          // 读取 gemini_result.json 文件
-          fs.readFile(Constant.GEMINI_OUTPUT_PATH, 'utf8', (err, data) => {
-            if (err) {
-              reject(err);
+      try {
+        await new Promise((resolve, reject) => {
+          exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Command execution error for key ${key}: ${error.message}`);
+              console.error(`stderr: ${stderr}`);
+              errors.push({ key, error: error.message }); // 記錄錯誤
+              resolve(); // 不中斷程序，繼續執行
               return;
             }
 
-            const response = JSON.parse(data);
-            jsonData[key]['AD-content'][0] = response['Audiodescription'];
+            // 读取 gemini_result.json 文件
+            fs.readFile(Constant.GEMINI_OUTPUT_PATH, 'utf8', (err, fileData) => {
+              if (err) {
+                console.error(`Error reading gemini output for key ${key}: ${err.message}`);
+                errors.push({ key, error: err.message }); // 記錄錯誤
+                resolve();
+                return;
+              }
 
-            console.log('key:', key, 'response:', response);
+              try {
+                const response = JSON.parse(fileData);
+                jsonData[key]['AD-content'][0] = response['Audiodescription'];
+                console.log(`Processed key ${key}:`, response);
+              } catch (jsonError) {
+                console.error(`Error parsing JSON for key ${key}: ${jsonError.message}`);
+                errors.push({ key, error: jsonError.message }); // 記錄錯誤
+              }
 
-            resolve();
+              resolve();
+            });
           });
         });
-      });
 
-      // 暂停 35 秒
-      await new Promise((resolve) => setTimeout(resolve, 35000));
+        // 暂停 35 秒
+        // await new Promise((resolve) => setTimeout(resolve, 35000));
+
+      } catch (processingError) {
+        console.error(`Unhandled error for key ${key}:`, processingError.message);
+        errors.push({ key, error: processingError.message }); // 記錄未處理的錯誤
+      }
     }
 
     // 保存文件
     fs.writeFile(AD_json, JSON.stringify(jsonData), (err) => {
       if (err) {
-        console.error('ERROR:', err);
+        console.error('ERROR saving file:', err);
         event.reply('gemini_end', 'FAIL');
         return;
       }
       console.log('The file has been saved!');
-      event.reply('gemini_end', 'Success');
+      const resultStatus = errors.length === 0 ? 'Success' : 'Partial Success';
+      if (errors.length > 0) {
+        console.log('Errors encountered:', errors);
+      }
+      event.reply('gemini_end', resultStatus);
     });
   });
 }
-
-
