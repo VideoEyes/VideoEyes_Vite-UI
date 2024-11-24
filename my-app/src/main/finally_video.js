@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 
-export async function finally_video( Constant) {
+export async function finally_video(Constant) {
     const audioFiles = fs.readdirSync(Constant.AUDIO_FOLDER).filter(file => file.endsWith('.mp3'));
 
-    //check dir existing
+    // Check if output directory exists
     if (!fs.existsSync(Constant.OUTPUT_VIDEO_FOLDER)) {
         fs.mkdirSync(Constant.OUTPUT_VIDEO_FOLDER, { recursive: true });
     }
@@ -19,6 +19,7 @@ export async function finally_video( Constant) {
     for (const audioFile of audioFiles) {
         const audioPath = path.join(Constant.AUDIO_FOLDER, audioFile);
 
+        // Parse delay from filename
         const delay = audioFile.replace('.mp3', '').replace(/_/g, ':');
         console.log('delay:', delay);
 
@@ -28,28 +29,41 @@ export async function finally_video( Constant) {
         const seconds = parseFloat(parts[2]);
         const now_time = parseInt(((hours * 60 * 60) + (minutes * 60) + seconds) * 1000);
 
-
+  
         inputs.push(audioPath);
+
+        
         filters.push({
             filter: 'adelay',
-            options: `${now_time}|${now_time}`,
+            options: `${now_time}|${now_time}`, 
             inputs: `[${filterIndex}:a]`,
             outputs: `[delayed${filterIndex}]`
         });
         filters.push({
-            filter: 'volume',
-            options: '3.0',  // Increase volume by 2 times
+            filter: 'loudnorm',
+            options: 'I=-16:LRA=11:TP=-1.5', 
             inputs: `[delayed${filterIndex}]`,
+            outputs: `[loudnorm${filterIndex}]`
+        });
+        filters.push({
+            filter: 'volume',
+            options: '4.0', 
+            inputs: `[loudnorm${filterIndex}]`,
             outputs: `[volume${filterIndex}]`
         });
+
         filterIndex++;
     }
 
-    const amixInputs = `[0:a]` + filters.filter(f => f.filter === 'volume').map((_, index) => `[volume${index + 1}]`).join('');
+    // Construct the inputs for amix
+    const amixInputs = `[0:a]` + filters
+        .filter(f => f.filter === 'volume')
+        .map((_, index) => `[volume${index + 1}]`)
+        .join('');
 
     return new Promise((resolve, reject) => {
         const command = ffmpeg();
-        command.input(Constant.CLIPS_FOLDER + "\\video.mp4");
+        command.input(path.join(Constant.CLIPS_FOLDER, "video.mp4"));
 
         // Add all audio inputs
         inputs.forEach(audioPath => command.input(audioPath));
@@ -64,19 +78,19 @@ export async function finally_video( Constant) {
             ...filters,
             {
                 filter: 'amix',
-                options: `inputs=${filters.length / 2 + 1}:duration=longest`,
+                options: `inputs=${filters.length / 3 + 1}:duration=longest`, // Divide by 3 (adelay, loudnorm, volume per audio)
                 inputs: amixInputs,
                 outputs: 'a'
             }
         ]);
 
         command
-            .outputOptions('-map 0:v')
-            .outputOptions('-map [a]')
-            .outputOptions('-c:v copy')
-            .outputOptions('-c:a aac')
-            .outputOptions('-shortest')
-            .output(Constant.OUTPUT_VIDEO_FOLDER + "\\output.mp4")
+            .outputOptions('-map 0:v') // Use the original video
+            .outputOptions('-map [a]') // Use the mixed audio
+            .outputOptions('-c:v copy') // Copy video codec
+            .outputOptions('-c:a aac') // Use AAC for audio
+            .outputOptions('-shortest') // Stop when the shortest stream ends
+            .output(path.join(Constant.OUTPUT_VIDEO_FOLDER, "output.mp4"))
             .on('start', commandLine => console.log(`Spawned Ffmpeg with command: ${commandLine}`))
             .on('error', (err, stdout, stderr) => {
                 console.error('Error:', err);
