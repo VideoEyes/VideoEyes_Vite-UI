@@ -164,9 +164,9 @@ class GeminiGenerator:
         return {"replies": replies}
 
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={"properties": {"Audiodescription": {"title": "Audiodescription", "type": "string"}}, "required": ["Audiodescription"], "title": "audioDescription", "type": "object"}))
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={"properties": {"Audiodescription": {"title": "Audiodescription", "type": "string"}}, "required": ["Audiodescription"], "title": "audioDescription", "type": "object"}))
 
-summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-flash", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={
+summary_gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro", generation_config=GenerationConfig(response_mime_type= "application/json", response_schema={
   "properties": {
     "who": {
       "title": "Who",

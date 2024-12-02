@@ -146,7 +146,7 @@ class GeminiGenerator:
         generator = VertexAIGeminiGenerator(project_id=self.project_id, location=self.location, model=self.model,safety_settings=safetyConfig)
         return {"replies": generator.run(prompt)["replies"]}
 
-gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro-preview-0514")
+gemini_generator = GeminiGenerator(project_id="gemini-rain-py", location="us-central1", model="gemini-1.5-pro")
 
 @component
 class upload2GCS:
